@@ -319,3 +319,114 @@ docker-compose restart django
 <img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/e2e76177-47d8-4c83-a90a-18c5d1eae0a3" />
 <img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/5f4aab44-8a28-43d5-ab23-5cf585797c32" />
 
+- Cài đặt Cloudflared chạy các lệnh này để cài đặt gói:
+```
+# Di chuyển vào thư mục tạm
+cd /tmp
+
+# Tải gói cài đặt
+wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+```
+
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/448a88be-7c09-4d1f-b5f4-00cb8c688b8a" />
+
+```
+Cài đặt gói vào hệ thống
+sudo dpkg -i cloudflared-linux-amd64.deb
+
+Kiểm tra: cloudflared --version
+```
+
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/d8f6eb26-e225-4dc9-9da8-ee3b23cce3d5" />
+
+- Đăng nhập Cloudflare
+Chạy: cloudflared tunnel login
+Ubuntu hiện Link: https://dash.cloudflare.com/argotunnel?aud=&callback=https%3A%2F%2Flogin.cloudflareaccess.org%2Fes5aa6kW-3TK6wyxWNs-UORrwvDlrM4PTtbXUwGsnXk%3D Copy Link chạy lên trình duyệt.
+
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/7809a33b-6fb6-4fc0-9071-4e782aecd9f0" />
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/e770dc10-9b0f-48a6-b4db-06fd514a4f7a" />
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/b35c2468-58fc-4160-870a-198804443c28" />
+
+- Cloudflare sẽ hỏi: Authorize Cloudflared -> chọn domain -> nhấn Authorize
+- Trong Terminal Ubuntu sẽ hiện: You have successfully logged in.
+
+<img width="1732" height="233" alt="image" src="https://github.com/user-attachments/assets/db93bdde-b6dd-4340-a189-950ed3e83eec" />
+
+<img width="1918" height="151" alt="image" src="https://github.com/user-attachments/assets/e3c494d3-ea95-4877-bb6c-e1f2f5a3aab5" />
+
+- ID: 7a37f0fe-ad37-4b68-a18b-099ecfc18272
+
+- Tạo file config
+Tạo file: mkdir -p ~/.cloudflared
+Chạy lệnh: nano ~/.cloudflared/config.yml
+Nội dung file:
+```
+tunnel: 7a37f0fe-ad37-4b68-a18b-099ecfc18272
+credentials-file: /home/nguyenvanthu/.cloudflared/7a37f0fe-ad37-4b68-a18b-099ecfc18272.json
+
+ingress:
+  - hostname: nguyenthucamdo.id.vn
+    service: http://localhost:8000
+  - service: http_status:404
+```
+
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/b2fd8b81-060b-4963-97a1-c2dab7f2f917" />
+
+- Tạo DNS
+Chạy lệnh: 
+```
+cloudflared tunnel route dns -f camdo nguyenthu.id.vn
+cloudflared tunnel run camdo
+```
+
+<img width="1917" height="810" alt="image" src="https://github.com/user-attachments/assets/a09ee396-dbdb-4d7c-b446-87148cb59b74" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/6860e9f3-c578-47ba-b399-8ea49ceb6060" />
+
+- Lưu ý:
+Không được tắt Terminal.
+Nếu tắt -> Web sẽ off
+
+- Truy cập website
+Truy cập: https://nguyenthu.id.vn/
+
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/44c5852f-347a-4eb5-b488-7fbc7d419043" />
+
+- Truy cập Admin Django: https://nguyenthu.id.vn/admin/login/?next=/admin/
+
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/ac8214c7-314c-4a49-8ea9-a961f003f703" />
+
+- Khi đăng nhập vào Admin Django sẽ bị lỗi hệ thống
+
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/4fd7e047-71ce-4252-8d35-6d9091042bc1" />
+
+- Cần bổ sung trong file settings.py
+```
+Gõ lệnh: sudo nano django_app/pawnshop/settings.py
+Thêm CSRF_TRUSTED_ORIGINS
+```
+
+```
+CSRF_TRUSTED_ORIGINS = [
+    "https://nguyenthu.id.vn",
+]
+```
+
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/05531da3-0800-4d17-8529-2815f4df525d" />
+
+- Restart lại: cd ~/camdo_project && docker-compose restart django
+
+- Trước khi truy cập lại trang web, cần khởi chạy lại Cloudflare Tunnel: cloudflared tunnel run camdo
+
+Nếu không thực hiện bước này, hệ thống sẽ không tạo kết nối ra Internet, vì vậy website sẽ không thể truy cập từ trình duyệt bên ngoài.
+- Truy cập lại: https://nguyenthu.id.vn/admin và đăng nhập
+
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/b504ddd7-5475-4489-8283-2b86b1ceb6ab" />
+
+## Đánh giá
+- Sau khi hoàn thành bài tập, hệ thống quản lý tiệm cầm đồ đã được xây dựng thành công dựa trên Django, kết hợp với MariaDB làm hệ quản trị cơ sở dữ liệu và phpMyAdmin để hỗ trợ quan sát dữ liệu. Toàn bộ hệ thống được triển khai trong môi trường Docker trên Ubuntu, giúp việc cài đặt, vận hành và quản lý trở nên thống nhất và dễ dàng hơn.
+- Trong quá trình thực hiện, em đã xây dựng được các thành phần chính của một ứng dụng web hoàn chỉnh như: thiết kế cơ sở dữ liệu, định nghĩa models trong Django, tạo giao diện quản trị (Django Admin) để thực hiện các thao tác thêm, sửa, xóa dữ liệu, đồng thời xây dựng giao diện người dùng bằng template HTML để hiển thị danh sách các khách hàng/con nợ đến hạn.
+- Bên cạnh đó, hệ thống còn được tích hợp Cloudflare Tunnel để public website ra Internet thông qua domain riêng, giúp có thể truy cập từ bên ngoài một cách thuận tiện. Việc triển khai này giúp em hiểu rõ hơn về cách đưa một ứng dụng web từ môi trường local lên môi trường internet thực tế.
+- Qua bài tập này, em đã nắm vững hơn các kiến thức về Django, Docker, cơ sở dữ liệu quan hệ và quy trình triển khai hệ thống web hoàn chỉnh. Đồng thời, em cũng rèn luyện được kỹ năng xử lý lỗi, cấu hình hệ thống và làm việc với nhiều công nghệ tích hợp trong một dự án thực tế.
+
+
+# <p align="center">***THE END***</p>
