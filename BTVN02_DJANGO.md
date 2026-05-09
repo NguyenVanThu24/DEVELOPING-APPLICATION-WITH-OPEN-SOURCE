@@ -12,6 +12,17 @@
 
 ---
 
+## Tổ chức CSDL cho hệ thống quản lý tiệm cầm đồ
+
+<img width="1218" height="1280" alt="z7807150835857_7424d6541b76d541b7561982cea24533" src="https://github.com/user-attachments/assets/e02e9793-78d4-4bef-9f26-4b120c349ecf" />
+
+***Giải thích:***
+- Một khách hàng khi đến tiệm có thể thực hiện cầm đồ nhiều lần khác nhau, vì vậy thông tin của một khách hàng sẽ liên kết với nhiều hợp đồng cầm đồ.
+- Mỗi món đồ cầm cố chỉ được ghi nhận cho một hợp đồng cụ thể để dễ theo dõi nguồn gốc và giá trị tài sản.
+- Trong quá trình vay, khách hàng có thể trả tiền thành nhiều đợt khác nhau, do đó một hợp đồng sẽ phát sinh nhiều lần thanh toán.
+
+## Triển khai cài đặt
+
 - Chạy kệnh:
 ```
 sudo apt update
