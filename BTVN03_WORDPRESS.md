@@ -1,4 +1,4 @@
-# <p align="center">PHÁT TRIỂN ỨNG DỤNG VỚI MÃ NGUỒN MỞ (WORDPRESSn="center">PHÁT TRIỂN ỨNG DỤNG VỚI MÃ NGUỒN MỞ (WORDPRESS + XÂY DỰNG WEBSITE GIỚI THIỆU TNUT)</p>
+# <p align="center">PHÁT TRIỂN ỨNG DỤNG VỚI MÃ NGUỒN MỞ (WORDPRESS + XÂY DỰNG WEBSITE GIỚI THIỆU TNUT)</p>
 
 **Môn học:** Phát triển ứng dụng với mã nguồn mở - TEE0421  
 
