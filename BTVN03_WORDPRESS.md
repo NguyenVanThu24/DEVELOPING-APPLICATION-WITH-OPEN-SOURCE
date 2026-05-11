@@ -16,17 +16,17 @@
 
 ```
 Internet
-|
+    |
 Cloudflare Tunnel
-|
+    |
 Ubuntu Server
-|
+    |
 my_wordpress
-  |
-  Docker-Compose.yml
-    ├── WordPress
-    ├── MariaDB
-    └── phpMyAdmin
+    |
+    Docker-Compose.yml
+      ├── WordPress
+      ├── MariaDB
+      └── phpMyAdmin
 ```
 
 ## II. Quy trình Setup Project
