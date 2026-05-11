@@ -145,10 +145,138 @@ volumes:
 
 <img width="1918" height="1078" alt="image" src="https://github.com/user-attachments/assets/5102f60b-433f-42f8-9e2e-b5d18b3a733e" />
 
+-Tạo bài viết 1: Giới thiệu bản thân. 
+
+<img width="1918" height="1078" alt="image" src="https://github.com/user-attachments/assets/261e7b83-d893-48c3-a0ed-3d3d0fbb41fc" />
+
+-Tạo nội dung: Chọn menu Bài viết (Posts) -> Thêm bài viết -> Xuất bản. Kết quả truy cập link: http://172.27.2.42:8082/2026/05/11/gioi-thieu-ban-than/
+
+<img width="1918" height="1078" alt="image" src="https://github.com/user-attachments/assets/386036f5-ecc3-4fe2-89d2-8500ef2d30cd" />
+
+<img width="1918" height="1078" alt="image" src="https://github.com/user-attachments/assets/878865ba-c8bb-4ee4-8d09-a59258b1c2f9" />
+
+<img width="1918" height="1078" alt="image" src="https://github.com/user-attachments/assets/91272082-286c-4f40-b4d1-78328cb69212" />
+
 ### 6. Kiểm tra truy cập PhpMyAdmin
+
+- Giao diện PhpMyAdmin:
+
+<img width="1918" height="1078" alt="image" src="https://github.com/user-attachments/assets/85ea521d-6dc0-46da-a01c-d60a9dae3531" />
+
+- Truy cập vào database:
+
+<img width="1918" height="1078" alt="image" src="https://github.com/user-attachments/assets/ff793436-5a76-4637-9bfc-a3f9362bdaae" />
+
+- Kiểm tra bảng dữ liệu:
+
+<img width="1918" height="1078" alt="image" src="https://github.com/user-attachments/assets/59c9bd16-ccf7-4ea4-8485-30831a212996" />
 
 ### 7. Public Website Cloudfare
 
+- Thêm respository:
+
+```
+curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloudflare-main.gpg
+echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflare-main noble main' | sudo tee /etc/apt/sources.list.d/cloudflare-main.list
+```
+
+<img width="1918" height="163" alt="image" src="https://github.com/user-attachments/assets/5961e2ee-c0ef-4bf9-bd5e-84f5433bac79" />
+
+- Cài Cloudfare vào Ubuntu:
+
+```
+sudo apt update
+sudo apt install cloudflared -y
+```
+
+<img width="1296" height="471" alt="image" src="https://github.com/user-attachments/assets/ced14690-5da8-447b-b1e2-e54025973393" />
+
+- Kiểm tra phiên bản: cloudflared --version
+
+<img width="828" height="72" alt="image" src="https://github.com/user-attachments/assets/2b59f7da-9c3d-41d6-8d74-f980efbcf600" />
+
+- Chạy lệnh: `cloudflared tunnel login`
+- Ubuntu trả về link: https://dash.cloudflare.com/argotunnel?aud=&callback=https%3A%2F%2Flogin.cloudflareaccess.org%2Fr-uExv1vJFR9-njKVXAMfvdPOrEKN7vO_mhRk0rCfkQ%3D
+- Coppy link dán mở lên trình duyệt.
+
+<img width="1918" height="1078" alt="image" src="https://github.com/user-attachments/assets/9a3cd503-da1e-4bae-b191-21c0c445a288" />
+
+- Cloudflare sẽ hỏi: `Authorize Cloudflared -> chọn domain -> nhấn Authorize`
+
+<img width="1918" height="1078" alt="image" src="https://github.com/user-attachments/assets/f8c8092b-2e2b-4ec2-b345-0dbb1c84e71f" />
+
+<img width="1918" height="1078" alt="image" src="https://github.com/user-attachments/assets/2c81e759-5a15-43c5-8e27-a91299a65e37" />
+
+- Chạy lệnh: `cloudflared tunnel create wordpress-tunnel`
+- Kiểm tra Tunnel: `cloudflared tunnel list`
+
+<img width="1918" height="332" alt="image" src="https://github.com/user-attachments/assets/4afbc4fc-732b-41b4-9750-ed46380d3c8a" />
+
+- Chạy lệnh tạo file ***config.yml:*** `nano ~/.cloudflared/config.yml`
+- Nội dung file ***config.yml:***\
+
+```
+tunnel: d569eff4-be3e-4131-8a4f-4123e9d5dc64
+credentials-file: /home/nguyenvanthu/.cloudflared/d569eff4-be3e-4131-8a4f-4123e9d5dc64.json
+
+ingress:
+  - hostname: mywordpress.nguyenthu.id.vn
+    service: http://localhost:8082
+
+  - service: http_status:404
+```
+
+<img width="1918" height="1078" alt="image" src="https://github.com/user-attachments/assets/67c03af2-7c60-457f-adee-05a07f665b92" />
+
+- Tạo DNS cho Tunnel chạy lệnh: `cloudflared tunnel route dns wordpress-tunnel wordpress.nguyenthu.id.vn`
+
+<img width="1727" height="50" alt="image" src="https://github.com/user-attachments/assets/30614d6e-bf31-4fb7-9363-dc6eef936122" />
+
+- Chạy khởi động Tunnel: `cloudflared tunnel run wordpress-tunnel`
+
+<img width="1918" height="761" alt="image" src="https://github.com/user-attachments/assets/1b473183-39ef-41b4-87e8-5441b564d9f1" />
+
 ## III. Nhận xét và đánh giá
+
+***1. Đánh giá về công sức triển khai (Effort)***
+
+- Việc sử dụng Docker để cài đặt WordPress giúp tối ưu hóa thời gian và công sức đáng kể so với phương pháp cài đặt LAMP/LEMP stack truyền thống:
+
+- Tiết kiệm thời gian: Thay vì phải cài đặt riêng lẻ từng dịch vụ (Apache, PHP, MariaDB) và cấu hình kết nối thủ công, Docker Compose cho phép khởi tạo toàn bộ hệ thống chỉ với một lệnh duy nhất.
+
+- Tính đóng gói cao: Toàn bộ cấu hình được định nghĩa trong file docker-compose.yml, giúp việc quản lý và di chuyển dự án giữa các máy chủ (từ máy vật lý sang VPS chẳng hạn) trở nên cực kỳ đơn giản và không phát sinh lỗi tương thích môi trường.
+
+***2. Đánh giá về độ khó (Usability)***
+
+- Đối với người dùng cuối: WordPress là một mã nguồn mở cực kỳ dễ dùng với giao diện kéo thả (Elementor) và quản lý bài viết trực quan. Ngay cả sinh viên không chuyên cũng có thể tạo ra một website chuyên nghiệp.
+
+- Đối với quản trị viên (Admin): Việc kết hợp WordPress với Docker và Cloudflare Tunnel đòi hỏi kiến thức nền tảng tốt về hệ điều hành Linux, mạng (Networking) và quản lý cổng (Ports). Tuy nhiên, khi đã làm chủ được quy trình này, việc vận hành website trở nên rất chuyên nghiệp và an toàn.
+
+***3. Đánh giá về tiêu tốn tài nguyên máy chủ (Resources - RAM/CPU)***
+
+- Qua theo dõi bằng lệnh docker stats, mình có những nhận xét sau về tài nguyên trên máy chủ Ubuntu:
+
+- RAM: Đây là thành phần tốn kém nhất.
+
+- MariaDB: Chiếm khoảng 100MB - 150MB để duy trì CSDL.
+
+- WordPress (PHP-FPM): Tốn khoảng 150MB - 200MB tùy thuộc vào số lượng Plugin đã cài (đặc biệt là Elementor).
+
+- Tổng cộng: Hệ thống cần tối thiểu 1GB RAM để hoạt động mượt mà.
+
+- CPU: Mức sử dụng rất thấp (thường < 5%) khi web ở trạng thái chờ. CPU chỉ tăng nhẹ khi xử lý hình ảnh hoặc khi có nhiều người truy cập đồng thời.
+
+- Lưu trữ: Docker giúp quản lý dung lượng tốt, nhưng cần chú ý dọn dẹp các Image cũ để tránh đầy ổ cứng.
+
+***4. Giải pháp Public Web qua Cloudflare Tunnel***
+- Đây là điểm sáng nhất của dự án:
+
+- Ưu điểm: Giúp đưa website cá nhân từ máy vật lý ra internet một cách bảo mật tuyệt đối mà không cần mở cổng (Open port) trên Router hay thuê IP tĩnh.
+
+- Hiệu quả: Tên miền mywordpress.nguyenthu.id.vn hoạt động ổn định, có sẵn chứng chỉ SSL (HTTPS) miễn phí từ Cloudflare, giúp bài viết về bản thân và ngành học TNUT trông chuyên nghiệp và đáng tin cậy hơn.
+
+***🏁 Kết luận chung***
+
+- Việc sử dụng mã nguồn mở WordPress kết hợp với công nghệ Docker và Cloudflare Tunnel là giải pháp tối ưu cho sinh viên ngành Kỹ thuật máy tính. Nó không chỉ đáp ứng nhu cầu xây dựng Portfolio cá nhân mà còn là bài thực hành tuyệt vời về quản trị hệ thống và triển khai ứng dụng thực tế.
 
 # <p align="center">***THE END***</p>
