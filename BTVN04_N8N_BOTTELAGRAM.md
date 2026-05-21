@@ -20,7 +20,9 @@
 
 ## II. Quy trình Setup Project
 
-### GIAI ĐOẠN 1: THIẾT LẬP HẠ TẦNG (INFRASTRUCTURE SETUP).
+### GIAI ĐOẠN 1: THIẾT LẬP KHỞI TẠO HẠ TẦNG (INFRASTRUCTURE SETUP).
+
+### ***A. Kiểm tra phiên bản docker & docker compose***
 
 - Mục tiêu của giai đoạn này là xây dựng một "tổ hợp" Container gồm: MariaDB, phpMyAdmin, WordPress và n8n chạy đồng bộ, chung múi giờ Việt Nam và phân quyền bảo mật tuyệt đối.
 
@@ -28,284 +30,243 @@
 
 <img width="670" height="186" alt="image" src="https://github.com/user-attachments/assets/924994f3-7903-4f6c-8f98-2992d3992304" />
 
-### ***Khởi tạo cấu trúc thư mục dự án***
+### ***B. Khởi tạo cấu trúc thư mục dự án***
 
 ```
-mkdir -p ~/ai_content_project/mariadb_data ~/ai_content_project/wordpress_data ~/ai_content_project/n8n_data
-cd ~/ai_content_project
+mkdir ~/ai_automation_v2
+cd ~/ai_automation_v2
 ```
 
-<img width="1697" height="79" alt="image" src="https://github.com/user-attachments/assets/54598618-9871-470e-acdb-13926dbc8108" />
+<img width="697" height="81" alt="image" src="https://github.com/user-attachments/assets/73b1b67a-c485-4556-a109-fbf22d3a1c92" />
 
-- ***Giải thích:*** Việc tạo sẵn các thư mục này giúp Docker "gắn" (Volume Mount) dữ liệu từ Container vào máy Ubuntu của bạn. Sau này tắt máy hay update Docker thì bài viết WordPress và cấu hình n8n của bạn không bị mất.
+### ***C. Khở tạo Cloudfare Tunnel mới cho dự án***
 
-- Viết file ***docker-compose.yml*** hoàn chỉnh
+- Mặc dù yêu cầu dùng AI chuyển cấu hình sang Docker, nhưng để có mạng kết nối, trước tiên em đứng từ Ubuntu xin Cloudflare cấp một cái Tunnel ID (UUID) và File khóa xác thực (.json) mới hoàn toàn.
+
+- Gõ lệnh tạo tunnel mới (tên tunnel cũng đặt khác đi để tránh trùng): `cloudflared tunnel create tunnel_automation_v2`. Với ID `b22bdc3d-4fc2-4ce6-bb1e-f63d60b2f7df`
+
+<img width="1479" height="200" alt="image" src="https://github.com/user-attachments/assets/fbf88783-f6ed-4b51-9416-b3440d82a054" />
+
+- Di chuyển file khóa vào vùng cô lập. Ngay sau khi tạo xong, file khóa xác thực .json sẽ nằm trong thư mục ẩn của hệ thống. Cần dùng lệnh này để di chuyển ngay nó về nằm gọn bên trong thư mục dự án mới, đồng
+thời đổi tên thành tunnel_secret.json cho dễ quản lý: `cp ~/.cloudflared/b22bdc3d-4fc2-4ce6-bb1e-f63d60b2f7df.json ~/ai_automation_v2/tunnel_secret.json`
+
+<img width="1481" height="91" alt="image" src="https://github.com/user-attachments/assets/a5b57a5d-3565-4ca7-a05e-00cb39125c25" />
+
+### ***D. Cấu hình định tuyến file Config.yml***
+
+- Sử dụng lệnh `nano config.yml` để cấu hình đinh tuyến file ***config.yml:*** 
+
+- Một giao diện soạn thảo hiện ra, nội dung file cấu hình:
 
 ```
-version: '3.8'
-
-services:
-  # 1. Hệ quản trị cơ sở dữ liệu MariaDB
-  mariadb:
-    image: mariadb:latest
-    container_name: mariadb_server
-    restart: always
-    environment:
-      TZ: Asia/Ho_Chi_Minh
-      MYSQL_ROOT_PASSWORD: thu123
-    volumes:
-      - ./mariadb_data:/var/lib/mysql
-    ports:
-      - "3306:3306"
-
-  # 2. Công cụ quản lý DB phpMyAdmin
-  phpmyadmin:
-    image: phpmyadmin:latest
-    container_name: phpmyadmin_tool
-    restart: always
-    depends_on:
-      - mariadb
-    environment:
-      PMA_HOST: mariadb
-      TZ: Asia/Ho_Chi_Minh
-    ports:
-      - "8081:80"
-
-  # 3. Nền tảng CMS WordPress
-  wordpress:
-    image: wordpress:latest
-    container_name: wordpress_site
-    restart: always
-    depends_on:
-      - mariadb
-    environment:
-      TZ: Asia/Ho_Chi_Minh
-      WORDPRESS_DB_HOST: mariadb:3306
-      WORDPRESS_DB_USER: wp_automation        # User này lát nữa ta sẽ tạo trong phpMyAdmin
-      WORDPRESS_DB_PASSWORD: thu123
-      WORDPRESS_DB_NAME: wp_ai_db             # Database này lát nữa ta sẽ tạo trong phpMyAdmin
-    ports:
-      - "8082:80"
-    volumes:
-      - ./wordpress_data:/var/www/html
-
-  # 4. Công cụ tự động hóa n8n
-  n8n:
-    image: docker.n8n.io/n8nio/n8n:latest
-    container_name: n8n_automation
-    restart: always
-    environment:
-      - TZ=Asia/Ho_Chi_Minh
-    ports:
-      - "5678:5678"
-    volumes:
-      - ./n8n_data:/home/node/.n8n
-```
-
-- Gõ lệnh: `nano docker-compose.yml` và dán toàn bộ nội dung cấu hình chuẩn hóa bên trên đây vào. Mật mã dùng chung `thu123`
-
-<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/c3ee1bdd-a0b3-4a3b-b381-fab58b175050" />
-
-➡️ ***(Nhấn Ctrl + O, Enter để lưu và Ctrl + X để thoát).***
-
-### ***Khởi chạy hạ tầng hệ thống***
-
-- docker-compose up -d # kích hoạt hệ thống bằng lệnh
-
-<img width="1919" height="568" alt="image" src="https://github.com/user-attachments/assets/cbb486fd-bed6-48ee-9099-5654a8a19960" />
-
-- docker-compose # Kiểm tra các container đã vào trạng thái sãn sàng
-  
-<img width="1919" height="587" alt="image" src="https://github.com/user-attachments/assets/18f1d3fb-aa4d-4b4d-b3fb-76debbc52579" />
-
-### ***Phân quyền bảo mật PhpMyAdmin***
-
-- Dùng phpMyAdmin tạo một CSDL trống và một User chỉ có quyền duy nhất với CSDL đó.
-
-- Truy cập phpMyAdmin: Mở trình duyệt trên Windows gõ: http://localhost:8081 hoặc http://172.27.2.42:8081
-
-| Đăng nhập | Tài khoản: root | Mật khẩu: thu123 |
-|---|---|---|
-
-- Tạo CSDL mới 
-
-  - Nhìn sang cột bên trái, bấm vào chữ New (Mới)
-
-  - Ô Tên cơ sở dữ liệu: Gõ đúng tên wp_ai_db
-
-  - Bấm nút Create (Tạo). (Bây giờ ta có CSDL trống)
-
-<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/0b6b6759-747a-4d14-b76d-e7034c5f5b09" />
-
-- Tạo User phân quyền biệt lập:
-
-  - Nhìn lên thanh menu ngang phía trên, chọn mục User accounts (Tài khoản người dùng).
-
-  - Chọn Add user account (Thêm tài khoản người dùng).
-
-- Login Information:
-
-| Trường thông tin | Thông  |
-|---|---|
-| User name (Tên người dùng) | Gõ wp_automation |
-| Host name (Tên máy chủ) | Chọn Any host (hoặc gõ dấu %) |
-| Password (Mật khẩu) | Gõ thu123 |
-| Re-type (Gõ lại) | Gõ thu123 |
-
-- Database for user account bỏ qua các mục phân quyền tự động (Rất quan trọng):
-  
-  - Mục Database for user account: ĐỂ TRỐNG, không tích vào bất kỳ ô nào trong 2 ô đó.
-
-  - Mục Global privileges (Quyền toàn cục): Cũng ĐỂ TRỐNG BÀN PHÍM, không bấm "Check all".
-
-➡️ Kéo xuống dưới cùng bên phải, nhấn nút Go để tạo User. Lúc này màn hình sẽ báo thành công và bạn đã có một User "sạch".
-
-<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/3c8e78fb-f0ca-44b6-a332-8496e6f2a58c" />
-
-- Đã tạo thành công tài khoản người dùng
-  
-<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/e4bf3aff-3c7c-4098-a375-433044a15746" />
-
-### ***Gán quyền chính xác vào riêng DB wp_ai_db***
-
-- Ngay sau khi nhấn Go ở bước trên, nhìn lên menu ngang phía trên cùng của phpMyAdmin:
-
-- Bấm lại vào tab User accounts (Tài khoản người dùng).
-
-- Tìm đến dòng của user wp_automation vừa tạo, nhìn sang bên phải bấm vào Edit privileges (Sửa đổi quyền).
-
-- Ở giao diện mới, nhìn lên menu ngang phụ (nằm ngay dưới hàng chữ Database/SQL/Status...), bấm vào mục Database.
-
-- Tại ô chọn, tìm và click chọn đúng tên database wp_ai_db, sau đó bấm Go.
-
-- Giao diện cấp quyền riêng cho DB này sẽ hiện ra: Thứ tích vào ô Check All (nằm ngay cạnh chữ Table-specific privileges hoặc chọn tất cả các quyền SELECT, INSERT, UPDATE, DELETE...).
-
-- Kéo xuống dưới cùng bên phải, nhấn nút Go để hoàn tất.
-
-<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/ec9fc306-d074-4d8c-8284-28449778981e" />
-
-- ***Kiểm tra lại:*** Hãy thử Log out tài khoản Root ra, đăng nhập lại bằng user `wp_automation / thu123.` Bạn sẽ thấy user này chỉ nhìn thấy duy nhất db wp_ai_db, hoàn toàn không thấy các dữ liệu hệ thống khác. Đúng chuẩn bảo mật!
-
-<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/949e0060-f2cc-4382-ae71-04c037e45496" />
-
-- Kết quả đăng nhập lại bằng:
-
-  - User: wp_automation
-
-  - Password: thu123
-
-- Cột danh sách bên trái, thấy đúng `wp_ai_db và information_schema,` hoàn toàn không nhìn thấy các DB hệ thống khác (mysql, sys, performance_schema) đã hoàn thành bài thực hành phân quyền an toàn thông tin.
-
-<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/bfd4f2b7-fb44-495e-b4b5-25a641937467" />
-
-### ***Khởi tạo lần đầu cho Wordpress
-
-- Mở trình duyệt gõ: http://localhost:8082 hoặc http://172.27.2.42:8082
-
-  - Chọn ngôn ngữ (Tiếng Việt hoặc Tiếng Anh) rồi bấm Tiếp tục.
-
-  - Vì các tham số môi trường chúng ta đã truyền thẳng vào file `docker-compose.yml` trùng khớp với User/Database, WordPress sẽ kết nối thành công ngay lập tức mà không đòi hỏi nhập lại thông tin DB!
-
-  - Nhấn nút Tiếp tục (Continue).
-
-<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/914948fe-64d0-4174-bbf6-2009a12e3d48" />
-
-- Điền thông tin quản trị tối cao (Site Information). Vì cấu hình cơ sở dữ liệu đã được nhận diện tự động từ file docker-compose.yml, WordPress sẽ nhảy thẳng đến trang cài đặt tài khoản. 
-
-| Trường thông tin | Thông tin |
-|---|---|
-| Tên trang web (Site Title) | Điền tên Blog hoặc dự án của bạn (Ví dụ: Thứ Nguyễn Blog hoặc Nguyễn Văn Thứ Portfolio) | 
-| Tên người dùng (Username) | Đây là tài khoản dùng để đăng nhập vào trang quản trị (/wp-admin) nguyenvanthu |
-| Mật khẩu (Password) | thu123 |
-| Email của bạn (Your Email) | mn9103541@gmail.com |
-
-- Mẹo: Nếu WordPress báo mật khẩu yếu (Weak), Thứ hãy tích vào ô "Chấp nhận sử dụng mật khẩu yếu" (Confirm use of weak password) ngay phía dưới để hệ thống cho phép đi tiếp.
-
-- Hiển thị với các công cụ tìm kiếm (Search Engine Visibility): Ô này Thứ ĐỂ TRỐNG (không tích chọn), vì sau này khi bạn public qua Cloudflare Tunnel, bạn sẽ muốn Google có thể tìm thấy và lập chỉ mục website của bạn.
-
-<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/513a656c-53fa-4d8f-a83d-4f589f756051" />
-
-- Hoàn tất cài đặt:
-
-  - Sau khi điền đầy đủ các thông tin trên, Thứ nhấn vào nút Cài đặt WordPress (Install WordPress) ở dưới cùng.
-
-  - Hệ thống sẽ xử lý trong khoảng 3 - 5 giây. Khi màn hình hiện chữ "Thành công!" (Success!), nghĩa là WordPress đã khởi tạo xong toàn bộ cấu trúc bảng bên trong database wp_ai_db.- 
-
-<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/1ebe473c-301c-4bed-892a-7e1113ccf687" />
-
-- Đăng nhập vào Dashboard chính:
-  
-  - Nhấn vào nút Đăng nhập (Log In).
-
-  - Điền Username và Password vừa tạo (nguyenvanthu / thu123).
-
-  - Nhấn Đăng nhập.
-
-<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/bb58e756-4677-411d-b121-9db96297f79c" />
-
-- Giao diện quản trị màu đen - trắng quen thuộc sẽ hiện ra.
-  
-<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/abdc95ef-d1fe-4c4c-88e9-0b3398cc770c" />
-
-### GIAI ĐOẠN 2: CẤU HÌNH KẾT NỐI & PUBLIC (CONNECTIVITY).
-
-### ***Cấu hình Cloudfare tunnel (Cho cả WP và n8n)***
-
-- Tạo CLoudfare Tunnel mới (Đặt tên là ai-automation-tunnel)
-
-- Chạy lệnh tạo Tunnel mới: `cloudflared tunnel create ai-automation-tunnel`
-
-- Hệ thống sẽ sinh ra một ID Tunnel mới và một file .json mới tương ứng copy lại cái ID mới này nhé. ***ID: 883adc1b-91cd-485d-ae27-e704225286d5***
-
-<img width="1915" height="168" alt="image" src="https://github.com/user-attachments/assets/9e8be29a-9eec-4283-b8e8-1b61664383c3" />
-
-- Tạo file cấu hình riêng nằm trong thư mục dự án. Để không bị lẫn lộn với file config mặc định của hệ thống, chúng ta sẽ tạo file config.yml ngay bên trong thư mục dự án hiện tại (~/ai_content_project).
-
-- Di chuyển vào thư mục dự án: `cd ~/ai_content_project`
-
-- Tạo mở file config riêng bằng lệnh: `nano config.yml`
-
-- Dán nội dung cấu hình biệt lập này vào (Nhớ thay ID và tên file .json mới của vào 2 dòng đầu nhé):
-
-```
-tunnel: 883adc1b-91cd-485d-ae27-e704225286d5
-credentials-file: /home/nguyenvanthu/ai_content_project/883adc1b-91cd-485d-ae27-e704225286d5.json
+tunnel: b22bdc3d-4fc2-4ce6-bb1e-f63d60b2f7df
+credentials-file: /etc/cloudflared/tunnel_secret.json
 
 ingress:
+  # 1. Định tuyến cho WordPress (Tên miền truy cập WP)
   - hostname: mywordpress.nguyenthu.id.vn
     service: http://127.0.0.1:8082
 
+  # 2. Định tuyến cho PhpMyAdmin (Để xem CSDL theo yêu cầu của thầy)
+  - hostname: pma.nguyenthu.id.vn
+    service: http://127.0.0.1:8080
+
+  # 3. Định tuyến cho n8n (Để cấu hình luồng tự động hóa)
   - hostname: n8n.nguyenthu.id.vn
     service: http://127.0.0.1:5678
 
   - service: http_status:404
 ```
 
-<img width="1299" height="335" alt="image" src="https://github.com/user-attachments/assets/4e91b2ad-465b-4639-b028-38ca0cdbd4e4" />
+<img width="1478" height="752" alt="image" src="https://github.com/user-attachments/assets/b192153e-d6c1-45f7-abcf-bc3619f71059" />
 
-➡️ ***(Nhấn Ctrl + O, Enter để lưu và Ctrl + X để thoát).***
+***➡️ Nhấn Ctrl + O, Enter để lưu và Ctrl + X để thoát***
 
-- Định tuyến (outerDNS) cho 2 Subdomain mới
+### ***E. Tạo file cấu hình docker-compose.yml (5 Services)***
+
+- Đây là trái tim của Giai đoạn 1. File này định nghĩa đúng và đủ 5 dịch vụ: `mariadb, phpmyadmin, wordpress, n8n, và cloudflared.`
+
+- Sử dụng lệnh `nano docker-compose.yml` để tạo file ***docker-compose.yml*** với nội dung file như sau:
 
 ```
-cloudflared tunnel route dns 883adc1b-91cd-485d-ae27-e704225286d5 mywordpress.nguyenthu.id.vn
-cloudflared tunnel route dns 883adc1b-91cd-485d-ae27-e704225286d5 n8n.nguyenthu.id.vn
+version: '3.8'
+
+services:
+  # 1. Dịch vụ Cơ sở dữ liệu MariaDB
+  mariadb:
+    image: mariadb:latest
+    container_name: auto_mariadb
+    restart: always
+    environment:
+      TZ: "Asia/Ho_Chi_Minh"
+      MARIADB_ROOT_PASSWORD: root_password_999
+      MARIADB_DATABASE: wp_automation_db      # Tên database mới tinh
+      MARIADB_USER: auto_user
+      MARIADB_PASSWORD: user_password_999
+    volumes:
+      - mariadb_v2_data:/var/lib/mysql
+
+  # 2. Dịch vụ quản trị PhpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: auto_phpmyadmin
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mariadb
+      PMA_ARBITRARY: 1
+    depends_on:
+      - mariadb
+
+  # 3. Dịch vụ WordPress chính
+  wordpress:
+    image: wordpress:latest
+    container_name: auto_wordpress
+    restart: always
+    ports:
+      - "8082:80"
+    environment:
+      WORDPRESS_DB_HOST: mariadb
+      WORDPRESS_DB_NAME: wp_automation_db
+      WORDPRESS_DB_USER: auto_user
+      WORDPRESS_DB_PASSWORD: user_password_999
+    volumes:
+      - wordpress_v2_data:/var/www/html
+    depends_on:
+      - mariadb
+
+  # 4. Dịch vụ Tự động hóa n8n
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: auto_n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+      - WEBHOOK_URL=https://n8n.nguyenthu.id.vn/  # Điền chính xác Subdomain n8n của Thứ
+    volumes:
+      - n8n_v2_data:/home/node/.n8n
+
+  # 5. Dịch vụ Cloudflare Tunnel (Chạy cục bộ bằng file)
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: auto_tunnel
+    restart: always
+    network_mode: "host"
+    volumes:
+      - ./config.yml:/etc/cloudflared/config.yml:ro
+      - ./tunnel_secret.json:/etc/cloudflared/tunnel_secret.json:ro
+    command: tunnel --config /etc/cloudflared/config.yml run
+
+volumes:
+  mariadb_v2_data:
+  wordpress_v2_data:
+  n8n_v2_data:
 ```
 
-<img width="1744" height="163" alt="image" src="https://github.com/user-attachments/assets/1ff3baeb-c90c-4273-a466-a76cc21a9886" />
+<img width="1482" height="757" alt="image" src="https://github.com/user-attachments/assets/ee1b51a9-33b8-472b-a10c-a4b32a938e6c" />
 
-- Giải pháp xử lý chuyên nghiệp (Cô lập dự án):
+***➡️ Nhấn Ctrl + O, Enter để lưu và Ctrl + X để thoát***
 
-  - Trích xuất file khóa xác thực của dự án mới ra khỏi thư mục dùng chung và đưa về nằm gọn trong thư mục dự án hiện tại: `cp ~/.cloudflared/883adc1b-91cd-485d-ae27-e704225286d5.json ~/ai_content_project/`
- 
-- Chay Tunnel công khai hệ thống `cloudflared tunnel --config ~/ai_content_project/config.yml run` bằng file Config
+- Sau khi tạo thực hiện kiểm tra thư mục đã có những gì bằng lệnh `ls -la` với 3 file (tunnel_secret.json, config.yml, docker-compose.yml) nằm chung trong thư mục ~/ai_automation_v2
 
-  - Vì mình không dùng file config mặc định ở thư mục ẩn ~/.cloudflared/config.yml nữa, nên khi chạy Tunnel, phải truyền thêm tham số --config để chỉ định file cấu hình trong thư mục dự án:
- 
-<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/0ab94eff-254c-4c10-82a4-595fbc2e4148" />
+<img width="933" height="198" alt="image" src="https://github.com/user-attachments/assets/0d00ddc3-4c1f-4117-b60c-40b3cf00faaa" />
 
-### ***Các bước thiết lập luồng***
+- Lệnh: `chmod 644 tunnel_secret.json config.yml.` Cấp quyền Đọc và Ghi (6) cho người sở hữu, quyền Chỉ Đọc (4) cho nhóm và các đối tượng khác. Đây là mức bảo mật tiêu chuẩn, cho phép hệ thống Docker có quyềnvào đọc nội dung file cấu hình và file khóa để thông mạng, nhưng không được phép tự ý chỉnh sửa file.
 
+- Lệnh: `sudo chmod -R 777 ~/ai_automation_v2.` Sử dụng quyền Quản trị tối cao (sudo) và tác động đệ quy (-R) để mở toang toàn bộ quyền Đọc - Ghi - Chạy (777) cho thư mục dự án và tất cả file con bên trong. Xử lý triệt để lỗi xung đột bản quyền giữa các User hệ thống và Container Docker, ép dịch vụ Cloudflare Tunnel đọc được file xác thực ngay lập tức để sửa lỗi bị sập (Restarting).
 
+<img width="1072" height="72" alt="image" src="https://github.com/user-attachments/assets/78a55454-9769-45b2-93a2-697485456a30" />
+
+- Kích hoạt lệnh này để khởi động kéo các Service về chạy ngầm: `docker-compose up -d`
+
+<img width="1917" height="1079" alt="image" src="https://github.com/user-attachments/assets/7139035b-564a-47db-be96-03e1eeee3ebb" />
+
+- Hệ thống sẽ bắt đầu kéo (Pull) các Image từ Docker Hub về và khởi chạy. Khi chạy xong, Thứ gõ lệnh này để kiểm tra trạng thái các Container: `docker ps`
+
+<img width="1918" height="591" alt="image" src="https://github.com/user-attachments/assets/1516f1bd-4695-4fab-9e73-9def90d80ffe" />
+
+### GIAI ĐOẠN 2: ĐỊNH TUYẾN INTERNET & CẤU HÌNH BAN ĐẦU.
+
+- Mục tiêu của giai đoạn này là đưa cả 3 dịch vụ lên sóng thông qua Cloudflare Tunnel và thực hiện các yêu cầu bắt buộc của thầy về kiểm tra Cơ sở dữ liệu (CSDL).
+
+### ***A. Thêm bản ghi cho các dịch vụ container lên trên website cloudfare***
+
+- Cách xử lý khi không truy cập được vào các cổng:
+
+  - Đăng nhập vào https://dash.cloudflare.com.
+  - Chọn tên miền của bạn: nguyenthu.id.vn.
+  - Nhìn menu bên trái, chọn DNS -> Records (Bản ghi).
+  - Bấm nút Add record để thêm lần lượt 3 bản ghi CNAME sau đây để cấu hình định tuyến cho cả 3 dịch vụ: `Bản ghi 1 (Cho WordPress),` `Bản ghi 2 (Cho PhpMyAdmin),` `Bản ghi 3 (Cho n8n)`
+
+- Bản ghi 1 (Cho WordPress):
+  
+<img width="1915" height="1021" alt="image" src="https://github.com/user-attachments/assets/b0250d4c-914e-4f46-8c4c-ab6c6185a319" />
+
+- Bản ghi 2 (Cho PhpMyAdmin):
+
+<img width="1916" height="1019" alt="image" src="https://github.com/user-attachments/assets/53f2ddf5-d30b-4f98-b21b-efc00c844013" />
+
+- Bản ghi 3 (Cho n8n):
+
+<img width="1918" height="1021" alt="image" src="https://github.com/user-attachments/assets/03beaf7a-b9b1-40f5-9319-1e5a536aae0f" />
+
+- Danh sách bản ghi đã thêm thành công:
+
+<img width="1916" height="1019" alt="image" src="https://github.com/user-attachments/assets/0171371b-a235-475d-a821-e170a7510117" />
+
+### ***B. Truy cập PhpMyAdmin (Quan sát CSDL trống)***
+
+- Truy cập vào địa chỉ: https://pma.nguyenthu.id.vn
+
+| Trường thông tin | Thông tin |
+|---|---|
+| Tài khoản | root |
+| Mật khẩu | root_password_999 (theo file docker-compose mình vừa cấu hình) |
+
+<img width="1915" height="1021" alt="image" src="https://github.com/user-attachments/assets/b5f36687-6056-40a5-81ae-12e5e0334649" />
+
+- Nhìn sang danh sách cơ sở dữ liệu bên trái, bấm vào đúng tên database `wp_automation_db.` Sẽ thấy dòng chữ "No tables found in database" (Không tìm thấy bảng nào).
+
+<img width="1917" height="1022" alt="image" src="https://github.com/user-attachments/assets/8325afa0-8ad7-4e16-9250-114cc3c575bf" />
+
+### ***C. Truy cập Wordpress lần đầu***
+
+- Mở một tab mới và truy cập: https://mywordpress.nguyenthu.id.vn. Màn hình chào mừng của WordPress sẽ hiện ra. họn ngôn ngữ là Tiếng Việt (hoặc Tiếng Anh) rồi bấm Tiếp tục.
+
+<img width="1916" height="1021" alt="image" src="https://github.com/user-attachments/assets/3d9171ab-c8bd-4095-a32b-d85ef2c5996b" />
+
+- Thiết lập thông tin quản trị Website:
+  
+| Trường thông tin | Thông tin |
+|---|---|
+| Tên trang web | Thu’s Automation Project |
+| Tên người dùng (Username) | nguyenvanthu |
+| Mật khẩu (Password) | thu123 |
+| Email | mn9103541@gmail.com |
+
+<img width="1916" height="1020" alt="image" src="https://github.com/user-attachments/assets/fcf7813d-8b7f-4dcb-a63b-d9358bf73705" />
+
+- Bấm Cài đặt WordPress và đợi 5 giây để nó tự động thiết lập toàn bộ hệ thống ngầm.
+
+<img width="1915" height="1020" alt="image" src="https://github.com/user-attachments/assets/77d025c3-d366-477a-b2ae-84541a9960ea" />
+
+- Tiến hành đăng nhập lại để xác minh
+
+<img width="1918" height="1017" alt="image" src="https://github.com/user-attachments/assets/4850bbd1-0445-4600-8e10-66a9db90d426" />
+
+- Giao diện chào mừng thành công của wordpress
+
+<img width="1915" height="1023" alt="image" src="https://github.com/user-attachments/assets/87cf75cc-8f87-42ed-a801-686d99bd2314" />
+
+### ***D. Kiểm tra lại CSDL trên PhpMyAdmin***
+
+- uay trở lại tab PhpMyAdmin đang mở https://pma.nguyenthu.id.vn/index.php?route=/
+- Bấm nút F5 (Tải lại trang) hoặc bấm lại vào tên database wp_automation_db.
+- Lúc này, Thứ sẽ thấy một điều kỳ diệu: Hệ thống đã tự động đẻ ra chính xác 12 bảng dữ liệu hệ thống (bắt đầu bằng chữ wp_ như wp_posts, wp_users, wp_options...).
+
+<img width="1918" height="1020" alt="image" src="https://github.com/user-attachments/assets/59207cce-253d-47d6-b296-51571b311e67" />
 
 # <p align="center">***THE END***</p>
