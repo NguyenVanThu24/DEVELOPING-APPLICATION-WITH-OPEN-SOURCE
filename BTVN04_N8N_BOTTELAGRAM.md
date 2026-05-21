@@ -263,10 +263,65 @@ volumes:
 
 ### ***D. Kiểm tra lại CSDL trên PhpMyAdmin***
 
-- uay trở lại tab PhpMyAdmin đang mở https://pma.nguyenthu.id.vn/index.php?route=/
+- Quay trở lại tab PhpMyAdmin đang mở https://pma.nguyenthu.id.vn/index.php?route=/
 - Bấm nút F5 (Tải lại trang) hoặc bấm lại vào tên database wp_automation_db.
 - Lúc này, Thứ sẽ thấy một điều kỳ diệu: Hệ thống đã tự động đẻ ra chính xác 12 bảng dữ liệu hệ thống (bắt đầu bằng chữ wp_ như wp_posts, wp_users, wp_options...).
 
 <img width="1918" height="1020" alt="image" src="https://github.com/user-attachments/assets/59207cce-253d-47d6-b296-51571b311e67" />
+
+### ***E. Đăng bài viết giới thiệu***
+
+- Vào trang quản trị WordPress (tab Trang quản trị ở ảnh trước bạn chụp), nhìn menu bên trái chọn `Bài viết (Posts)` -> Viết bài mới `(Add New)`.
+
+<img width="1916" height="1079" alt="image" src="https://github.com/user-attachments/assets/67040b95-2c1a-43b2-a4a4-98e764119b55" />
+
+<img width="1917" height="1019" alt="image" src="https://github.com/user-attachments/assets/1b98e489-ff0b-4196-8f8d-3956fa8c1f60" />
+
+<img width="1915" height="1079" alt="image" src="https://github.com/user-attachments/assets/49476520-8840-4964-ab62-fddc2aa0c96d" />
+
+***✅ Kết quả đăng bài và đã có 2 bài viết.***
+
+### GIAI ĐOẠN 3: KÍCH HOẠT N8N & KHỞI TẠO CHÌA KHÓA KẾT NỐI (CREDENTIALS).
+
+- Mở một tab mới trên trình duyệt, truy cập vào địa chỉ: https://n8n.nguyenthu.id.vn và thực hiện các bước lấy bản quyền cực kỳ quan trọng.
+
+<img width="1917" height="1079" alt="image" src="https://github.com/user-attachments/assets/da932847-4b53-4a6c-8159-c51bbe9a7c7c" />
+
+### ***A. Đăng ký Admin & kích hoạt License Community***
+
+- Màn hình đầu tiên hiện ra, điền thông tin và mật khẩu tự chọn để thiết lập tài khoản Admin tối cao cho n8n. 
+
+| Trường thông tin | Thông tin |
+|---|---|
+| Email | K225480106062@tnut.edu.vn |
+| First Name | Thứ |
+| Last Name | Văn |
+| Password | Thu123@@ |
+
+<img width="1915" height="1079" alt="image" src="https://github.com/user-attachments/assets/416723af-52e5-48dc-8e38-26acbb8dd64a" />
+
+<img width="1915" height="1079" alt="image" src="https://github.com/user-attachments/assets/ddedeb4a-b28e-4228-9533-f78afdbdfef9" />
+
+- Chỉ cần bấm vào nút màu cam `Send me a free license key` là n8n tự động kích hoạt hoặc bắn key về Gmail trường!
+
+<img width="1918" height="1079" alt="image" src="https://github.com/user-attachments/assets/0cf3f62c-ebff-4a91-bf0b-57097c17c144" />
+
+- Kết quả nhận được Key gửi về Gmail. Key: `78eadb92-0857-4cc1-8e4a-61cd6342c431`
+
+<img width="1917" height="1079" alt="image" src="https://github.com/user-attachments/assets/f5e52471-6d79-4d3f-9248-a7589361f007" />
+
+- Kích hoạt License Key (Activate License key): `trang chủ -> setting -> usage and plan -> enter activation key -> điền key vừa nhận từ email vào`
+
+<img width="1917" height="1079" alt="image" src="https://github.com/user-attachments/assets/39e1ecff-9011-4787-84ba-cdccefe661b7" />
+
+***➡️ Bấm vào nút Activate màu cam ngay bên cạnh để xác nhận. Thông báo "Your Registered Community Edition has been successfully activated”.***
+
+- Chào mừng đến với giao diện chính của n8n! Màn hình hiện chữ Welcome, Thu! (Chào Thứ).
+
+<img width="1915" height="1020" alt="image" src="https://github.com/user-attachments/assets/9bfc68bb-95cf-430c-84ea-4c36b5e90b97" />
+
+- Quy trình tạo workflow mới ra màn hình chính bấm Start from scratch để bắt đầu kéo thả
+
+<img width="1915" height="1018" alt="image" src="https://github.com/user-attachments/assets/9dd7a03c-8b08-4f43-ad0c-03eb9efe4978" />
 
 # <p align="center">***THE END***</p>
