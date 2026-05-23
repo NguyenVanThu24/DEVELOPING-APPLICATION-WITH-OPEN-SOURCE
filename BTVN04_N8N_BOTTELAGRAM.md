@@ -706,7 +706,7 @@ Dự án đã hoàn thành vượt mức mong đợi và đạt được tất c
 
 ## IV. LIÊN HỆ & HỖ TRỢ
 
-Nếu gặp vấn đề:
+***Nếu gặp vấn đề:***
 1. Kiểm tra phần **Troubleshooting** ở trên
 2. Xem logs: `docker compose logs -f`
 3. Tìm kiếm trên Google/Stack Overflow
