@@ -12,6 +12,20 @@
 
 ---
 
+## 📌 Mục lục Hệ thống
+
+- [I. CẤU TRÚC DỰ ÁN](#i-cấu-trúc-dự-án)
+- [II. QUY TRÌNH SETUP PROJECT](#ii-quy-trình-setup-project)
+  - [GIAI ĐOẠN 1: THIẾT LẬP KHỞI TẠO HẠ TẦNG (INFRASTRUCTURE SETUP)](#giai-đoạn-1-thiết-lập-khởi-tạo-hạ-tầng-infrastructure-setup)
+  - [GIAI ĐOẠN 2: ĐỊNH TUYẾN INTERNET & CẤU HÌNH BAN ĐẦU](#giai-đoạn-2-định-tuyến-internet--cấu-hình-ban-đầu)
+  - [GIAI ĐOẠN 3: KÍCH HOẠT N8N & KHỞI TẠO CHÌA KHÓA KẾT NỐI (CREDENTIALS)](#giai-đoạn-3-kích-hoạt-n8n--khởi-tạo-chìa-khóa-kết-nối-credentials)
+  - [GIAI ĐOẠN 4: XỬ LÝ DỮ LIỆU & ĐĂNG BÀI TỰ ĐỘNG LÊN WORDPRESS](#giai-đoạn-4-xử-lý-dữ-liệu--đăng-bài-tự-động-lên-wordpress)
+  - [GIAI ĐOẠN 5: DEMO KẾT QUẢ CUỐI CÙNG](#giai-đoạn-5-demo-kết-quả-cuối-cùng)
+  - [🏆 NHẬN XÉT KẾT QUẢ ĐẠT ĐƯỢC TỪ DỰ ÁN](#-nhận-xét-kết-quả-đạt-được-từ-dự-án)
+- [📚 TÀI LIỆU THAM KHẢO](#-tài-liệu-tham-khảo)
+- [📧 Liên Hệ & Hỗ Trợ](#-liên-hệ--hỗ-trợ)
+
+---
 ## I. CẤU TRÚC DỰ ÁN
 
 ***A. Cấu trúc thư mục***
@@ -426,7 +440,7 @@ volumes:
 
 - Sau khi tạo xong, @BotFather sẽ gửi một đoạn mã HTTP API Token (Access Token). Copy chuỗi này lại.
 
-🚨 BƯỚC BẮT BUỘC: Bấm vào đường link của con Bot bạn vừa tạo, bấm Start và gửi cho nó một tin nhắn bất kỳ (ví dụ: Test bot) để kích hoạt luồng kết nối ban đầu.
+***🚨 BƯỚC BẮT BUỘC:*** Bấm vào đường link của con Bot bạn vừa tạo, bấm Start và gửi cho nó một tin nhắn bất kỳ (ví dụ: Test bot) để kích hoạt luồng kết nối ban đầu.
 
 <img width="1915" height="1019" alt="Ảnh chụp màn hình 2026-05-23 115213" src="https://github.com/user-attachments/assets/0dd27bc2-c544-4922-b551-865954a1f615" />
 
@@ -644,7 +658,7 @@ return {
 
 <img width="1913" height="1019" alt="Ảnh chụp màn hình 2026-05-23 143608" src="https://github.com/user-attachments/assets/9775c2d6-ef00-4159-b25a-7cb60b0526f5" />
 
-- Kết quả kỳ vọng: AI sẽ tự động chia bố cục bài viết, dùng thẻ <h2> làm các tiêu đề phụ, dùng thẻ <strong> để nhấn mạnh các từ khóa như Tối ưu tài nguyên, Tốc độ khởi động, Tính đóng gói, và sử dụng thẻ để làm bảng so sánh danh sách cực kỳ dễ nhìn.
+- Kết quả kỳ vọng: AI sẽ tự động chia bố cục bài viết, dùng thẻ làm các tiêu đề phụ, dùng thẻ để nhấn mạnh các từ khóa như Tối ưu tài nguyên, Tốc độ khởi động, Tính đóng gói, và sử dụng thẻ để làm bảng so sánh danh sách cực kỳ dễ nhìn.
 
 <img width="1916" height="1022" alt="image" src="https://github.com/user-attachments/assets/9ebac5a3-2d8b-4abb-894b-28849760b8fb" />
 
@@ -678,4 +692,33 @@ return {
 
 Dự án đã hoàn thành vượt mức mong đợi và đạt được tất cả các mục tiêu đề ra của môn học Thiết kế ứng dụng với mã nguồn mở. Hệ thống không chỉ dừng lại ở mức lý thuyết mà đã tạo ra một sản phẩm "Chatbot AI Content Creator" có giá trị thực tiễn rất cao, chứng minh năng lực kết hợp nhuần nhuyễn giữa hạ tầng mạng, lập trình logic JavaScript và công nghệ trí tuệ nhân tạo (Generative AI) của sinh viên Nguyễn Văn Thứ.
 
+---
+
+## 📚 TÀI LIỆU THAM KHẢO
+
+- [Docker Documentation](https://docs.docker.com/)
+- [Docker Compose](https://docs.docker.com/compose/)
+- [WordPress Official](https://wordpress.org/)
+- [Cloudflare Tunnel Guide](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)
+- [MariaDB Documentation](https://mariadb.com/docs/)
+
+---
+
+## 📧 Liên Hệ & Hỗ Trợ
+
+Nếu gặp vấn đề:
+1. Kiểm tra phần **Troubleshooting** ở trên
+2. Xem logs: `docker compose logs -f`
+3. Tìm kiếm trên Google/Stack Overflow
+4. Liên hệ: `Nguyễn Văn Thứ`
+
+| Trường thông tin | Thông tin |
+|---|---|
+| SĐT | 0346825*** |
+| Email | mn9103541@gmail.com  |
+
+---
+
 # <p align="center">***THE END***</p>
+
+👉 *Bản quyền nội dung thuộc về sinh viên Nguyễn Văn Thứ* © **25/05/2026** nguyenvanthu. Bảo lưu mọi quyền (All Rights Reserved).
