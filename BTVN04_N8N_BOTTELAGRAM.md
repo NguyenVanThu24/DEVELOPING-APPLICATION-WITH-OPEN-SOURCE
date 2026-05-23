@@ -12,13 +12,98 @@
 
 ---
 
-## I. Cấu trúc thư mục
+## I. CẤU TRÚC DỰ ÁN
+
+***A. Cấu trúc thư mục***
 
 ```
-
+📂 localhost (Thư mục: ~/ai_automation_v2)
+ ┃
+ ┣━━ 📝 config.yml -----------> [Cấu hình định tuyến Cloudflare Tunnel]
+ ┣━━ 🔑 tunnel_secret.json ----> [Chìa khóa bảo mật của Cloudflare Tunnel]
+ ┃
+ ┗━━ 🐳 docker-compose.yml ----> [Quản lý phối hợp 5 Container độc lập]
+      ┃
+      ┣━━ 🌐 cloudflare-tunnel (Cloudflared)
+      ┃    ┗━━ Kết nối bảo mật ra ngoài Internet qua Cloudflare Cloud
+      ┃
+      ┣━━ ⚙️ n8n-automation (n8n v2.x)
+      ┃    ┣━━ Webhook: Nhận tin nhắn từ Telegram API
+      ┃    ┣━━ Core Logic: Xử lý chuỗi bằng JavaScript Code
+      ┃    ┗━━ AI Engine: Gọi API sang Google Gemini Cloud
+      ┃
+      ┣━━ 📝 wordpress-cms (WordPress)
+      ┃    ┗━━ Nhận lệnh đăng bài tự động từ n8n qua Application Password
+      ┃
+      ┣━━ 🗄️ mariadb-database (MariaDB)
+      ┃    ┗━━ Lưu trữ toàn bộ dữ liệu bảng (Database) của WordPress
+      ┃
+      ┗━━ 🔧 phpmyadmin (Web GUI)
+           ┗━━ Công cụ quản trị cơ sở dữ liệu trực quan qua trình duyệt
 ```
 
-## II. Quy trình Setup Project
+***B. Biểu đồ luồng dữ liệu tự động hoàn toàn (Data Flow)***
+
+```
+📱 Điện thoại (User) 
+   🔻 [Chat: "Viết bài..."]
+💬 Telegram Cloud (Telegram Bot API)
+   🔻 [Bắn tín hiệu Webhook qua Internet]
+☁️ Cloudflare Cloud (Định tuyến Sub-domain an toàn)
+   🔻 [Chui qua Cloudflare Tunnel đi vào VPS]
+🐳 Container: cloudflare-tunnel (Local)
+   🔻 [Đẩy nội bộ trong mạng Docker Network]
+⚙️ Container: n8n-automation
+   🔻 1. Node Telegram Trigger bắt được tin nhắn text.
+   🔻 2. Node Gemini nhận text ➡️ Gọi API lên Google AI Studio ➡️ Trả về JSON.
+   🔻 3. Node JavaScript bóc tách cấu hình chuỗi sạch (Title, Content).
+   🔻 4. Node WordPress gọi API nội bộ kèm Application Password 24 ký tự.
+📝 Container: wordpress-cms
+   🔻 [Tự động lưu vào CSDL MariaDB và Xuất bản bài viết lên trang chủ!]
+```
+
+***C. Kiến Trúc Hệ Thống***
+
+```mermaid
+graph TD
+    %% Định nghĩa vùng mạng nội bộ Docker Network
+    subgraph Docker ["Docker Network"]
+        WordPress["WordPress CMS (:80)"]
+        n8n["n8n Automation (:5678)"]
+        PMA["PhpMyAdmin (:8080)"]
+        MariaDB[("MariaDB Database (:3306)")]
+    end
+
+    %% Các liên kết kết nối nội bộ trong Docker
+    WordPress --> MariaDB
+    PMA --> MariaDB
+    n8n -.->|Đăng bài tự động| WordPress
+
+    %% Định nghĩa các thành phần bên ngoài và định tuyến
+    Internet(("Public Internet"))
+    
+    subgraph Cloudflare ["Định tuyến Cloudflare"]
+        URL_WP["https://mywordpress.nguyenthu.id.vn"]
+        URL_n8n["https://n8n.nguyenthu.id.vn"]
+        Tunnel["Cloudflared Tunnel"]
+    end
+
+    %% Luồng đi của dữ liệu từ Internet vào hệ thống
+    Internet --> URL_WP & URL_n8n
+    URL_WP & URL_n8n --> Tunnel
+    
+    %% Phân chia cổng dịch vụ từ Tunnel vào các Container tương ứng
+    Tunnel -->|Cổng nội bộ :80| WordPress
+    Tunnel -->|Cổng nội bộ :5678| n8n
+
+    %% Chú thích đường dẫn Localhost để đối chiếu hạ tầng
+    WordPress --- L1["localhost:80"]
+    n8n --- L2["localhost:5678"]
+    PMA --- L3["localhost:8080"]
+```
+---
+
+## II. QUY TRÌNH SETUP PROJECT
 
 ### GIAI ĐOẠN 1: THIẾT LẬP KHỞI TẠO HẠ TẦNG (INFRASTRUCTURE SETUP).
 
@@ -188,6 +273,8 @@ volumes:
 
 <img width="1918" height="591" alt="image" src="https://github.com/user-attachments/assets/1516f1bd-4695-4fab-9e73-9def90d80ffe" />
 
+---
+
 ### GIAI ĐOẠN 2: ĐỊNH TUYẾN INTERNET & CẤU HÌNH BAN ĐẦU.
 
 - Mục tiêu của giai đoạn này là đưa cả 3 dịch vụ lên sóng thông qua Cloudflare Tunnel và thực hiện các yêu cầu bắt buộc của thầy về kiểm tra Cơ sở dữ liệu (CSDL).
@@ -280,6 +367,8 @@ volumes:
 <img width="1915" height="1079" alt="image" src="https://github.com/user-attachments/assets/49476520-8840-4964-ab62-fddc2aa0c96d" />
 
 ***✅ Kết quả đăng bài và đã có 2 bài viết.***
+
+---
 
 ### GIAI ĐOẠN 3: KÍCH HOẠT N8N & KHỞI TẠO CHÌA KHÓA KẾT NỐI (CREDENTIALS).
 
@@ -377,7 +466,7 @@ volumes:
 
 <img width="1914" height="1016" alt="image" src="https://github.com/user-attachments/assets/2a44bdaf-f04e-482f-8cde-37e4048604da" />
 
-<img width="1918" height="1020" alt="Ảnh chụp màn hình 2026-05-23 123245" src="https://github.com/user-attachments/assets/87794dd6-d0f4-49f3-90a3-3e55dc4a15b0" />
+<img width="1917" height="1019" alt="Ảnh chụp màn hình 2026-05-23 131039" src="https://github.com/user-attachments/assets/16a465ab-73a5-4558-b696-1c7d8f1bd5f2" />
 
 - Kéo dây từ Node Telegram ra, tìm kiếm Google Gemini -> Chọn Message a model.
 
@@ -389,16 +478,204 @@ volumes:
 
 <img width="1917" height="1016" alt="image" src="https://github.com/user-attachments/assets/d0adc444-ff6c-4f7d-97b0-53e3c9040fa1" />
 
-- Cấu hình Model: Chọn model đời mới ổn định (như gemini-2.0-flash hoặc gemini-pro).
+- Cấu hình Model: Chọn model đời mới ổn định chạy cực kỳ thông minh và quét dữ liệu siêu tốc (như gemini-2.0-flash hoặc gemini-pro).
 
 <img width="1918" height="1023" alt="image" src="https://github.com/user-attachments/assets/9bbff628-e568-4172-abaf-f39baf0b663b" />
 
+***Kéo thả dữ liệu vào ô prompt:***
 
+- Thao tác kéo thả: Nhìn sang cột INPUT bên trái ➡️ Tìm đến mục message ➡️ bấm mở rộng ra để thấy chữ text : Viết bài giới thiệu Chatbot AI ở dưới cùng.
+- Bấm giữ chuột vào chữ text đó, kéo thẳng chuột thả vào trong ô trống Prompt. Lúc này trong ô Prompt sẽ tự động xuất hiện một khối mã màu xám có chữ: {{ $json.message.text }}.
+- Gõ câu lệnh ép cấu trúc: Bấm chuột vào sau khối mã đó, gõ dấu chấm (.) rồi copy dán chính xác đoạn văn bản ràng buộc này vào:
+
+```
+. Trả về kết quả dưới dạng một chuỗi JSON duy nhất, tuyệt đối KHÔNG bọc trong ký tự đánh dấu khối code (như ```json ... ```). Chuỗi JSON bắt buộc phải có cấu trúc chính xác 100% như sau:
+{
+  "post_title": "Tiêu đề bài viết hay và hấp dẫn phù hợp với nội dung",
+  "post_content": "Nội dung bài viết được trình bày chi tiết, chuyên sâu, sử dụng đầy đủ các thẻ HTML như h1, h2, p, strong, ul, li để định dạng giao diện đẹp mắt."
+}
+```
 
 <img width="1918" height="1021" alt="image" src="https://github.com/user-attachments/assets/eb3a1c56-710e-4a25-a547-54de1287f06f" />
 
 <img width="1917" height="1022" alt="image" src="https://github.com/user-attachments/assets/e86c4732-9858-4d48-85d7-f63f4b6634da" />
 
+***Bật Output dạng JSON***
+
+- Cuộn chuột xuống dưới cùng của bảng thông số Node Gemini này.
+- Tìm mục có chữ Options ➡️ Bấm nút Add Option.
+- Tìm và chọn thuộc tính tên là: Output Content as JSON.
+- Gạt công tắc của thuộc tính đó sang trạng thái ON.
+
 <img width="1915" height="1019" alt="image" src="https://github.com/user-attachments/assets/b8c2388c-2b2b-42aa-8619-0b2423de8995" />
+
+***Chạy thử nghiệm để lấy kết quả***
+
+- Sau khi điền xong hết, Thứ nhìn lên phía trên tìm cái nút màu cam có chữ Execute step (ở góc trên bên phải khung cấu hình) rồi bấm vào đó.
+
+- Hệ thống n8n sẽ gửi lệnh sang Google AI. Thứ đợi khoảng 3-5 giây, nếu ở cột OUTPUT bên phải hiện ra một chuỗi dữ liệu chứa tiêu đề bài viết và nội dung bài viết đầy các thẻ HTML đã hoàn thành Node 2!
+  
+<img width="1914" height="1021" alt="image" src="https://github.com/user-attachments/assets/8d2655fa-383d-4dc0-939a-3291b44ba4ff" />
+
+---
+
+### GIAI ĐOẠN 4: XỬ LÝ DỮ LIỆU & ĐĂNG BÀI TỰ ĐỘNG LÊN WORDPRESS.
+
+***Node 3: Cấu hình Code (Code In JavaScript)***
+
+- Nối tiếp sau node Gemini, bấm dấu +, tìm node Code (chọn Code in JavaScript). 
+
+<img width="1915" height="1020" alt="image" src="https://github.com/user-attachments/assets/48940abc-574f-49f6-8207-af29ce48a217" />
+
+- Chọn loại ngôn ngữ: Đảm bảo ô ngôn ngữ đang chọn là `JavaScript.`
+
+- Dán code xử lý: Xóa sạch mấy dòng code ví dụ mặc định của n8n trong khung đi, rồi copy chính xác 100% đoạn mã này dán vào:
+
+```
+// 1. Lấy dữ liệu gốc từ node Gemini trả về
+const rawText = $input.first().json.content.parts[0].text;
+
+// 2. Chuyển đổi chuỗi thô thành một Object JSON sạch trong JavaScript
+const cleanData = JSON.parse(rawText);
+
+// 3. Trả về kết quả định dạng lại gọn gàng để Node WordPress chỉ việc dùng
+return {
+  title: cleanData.post_title,
+  content: cleanData.post_content
+};
+```
+
+<img width="1918" height="1021" alt="image" src="https://github.com/user-attachments/assets/96d244c1-5dc2-464d-a6f9-e796d5368b73" />
+
+- Chạy thử node: Bấm vào nút màu cam Execute step ở góc trên bên phải khung cấu hình.
+
+<img width="1917" height="1018" alt="image" src="https://github.com/user-attachments/assets/1600c4c3-3a02-4b93-9579-e1b23a27f294" />
+
+👉 Ở cột OUTPUT bên phải hiện ra đúng 2 dòng cô đọng là title và content (không còn mấy cái chữ loằng ngoằng parts[0].text nữa) là Node Code đã bóc tách dữ liệu thành công 100%! 
+
+***Node 4: WordPress (Create a Post)***
+
+- Nối tiếp sau node Code In JavaScrpit, tìm node WordPress -> Chọn hành động Create a Post.
+
+<img width="1918" height="1021" alt="image" src="https://github.com/user-attachments/assets/72c8fb4c-71cd-40f1-b6e7-ecb44a7aef64" />
+
+- Lấy mật khẩu ứng dụng WordPress: Trước khi cấu hình trên n8n, cần lấy chiếc vé thông hành nội bộ từ trang WordPress:
+
+  - Nhìn lên các tab trình duyệt đang mở, bấm vào tab trang quản trị WordPress của bạn: https://mywordpress.nguyenthu.id.vn/wp-admin
+  - Ở menu bên trái, tìm mục Tài khoản ➡️ Chọn Hồ sơ của bạn (Profile).
+  - Cuộn chuột xuống gần dưới cùng trang, tìm đến mục Mật khẩu ứng dụng (Application Passwords).
+  - Tại cái ô trống nhập tên, gõ chữ: n8n rồi bấm nút `Thêm mật khẩu ứng dụng mới.`
+  - Ngay lập tức, hệ thống sẽ hiện ra một chuỗi mã bảo mật gồm 24 ký tự (ngăn cách bởi các khoảng trắng). Copy lại chuỗi mã này.
+
+- Cấu hình Credential WordPress trên n8n. Quay lại tab n8n, trong bảng cấu hình Node WordPress đang mở:
+
+  - Tại mục Credential for WordPress API, Thứ bấm chọn Set  Credential.
+  - Điền thông số xác thực:
+
+| Trường thông tin | Thông tin |
+|---|---|
+| WordPress URL | https://mywordpress.nguyenthu.id.vn/ |
+| User | nguyenvanthu |
+| Password | Dán (Paste) cái chuỗi mã 24 ký tự mật khẩu ứng dụng vừa copy ở trên. |
+
+- Bật bỏ qua SSL: Nhìn trong bảng Parameters, tìm mục `Ignore SSL Issues (Insecure)` và gạt nút bật sang ON (để hệ thống không bị chặn bởi chứng chỉ bảo mật lỗi). 
+
+- Click `Save` để lưu
+
+<img width="1916" height="1022" alt="image" src="https://github.com/user-attachments/assets/fcc592eb-d5bb-4bab-8cc2-c417c4898f2a" />
+
+***Mapping dữ liệu để đăng bài***
+
+- Đổ Title: ấm vào ô Title. Nhìn sang danh sách dữ liệu của Node Code JS ở cột INPUT bên trái ➡️ tìm đúng chữ title rồi kéo thả vào ô Title (để nó hiện khối mã xám {{ $json.title }}).
+
+<img width="1915" height="1019" alt="image" src="https://github.com/user-attachments/assets/27f09aee-ff3b-4dea-896e-f126eb8de5f9" />
+
+- Đổ Content: Thứ bấm vào ô Content ➡️ nhìn sang cột INPUT bên trái tìm đúng chữ content kéo thả vào ô Content (để nó hiện khối mã xám {{ $json.content }}).
+
+<img width="1916" height="1022" alt="image" src="https://github.com/user-attachments/assets/9172f370-0cd3-47e6-9015-b8d880854073" />
+
+- Cấu hình xuất bản ngay: Nhìn xuống dưới bấm nút Add Field ➡️ chọn thuộc tính Status ➡️ tại ô giá trị, thiết lập chọn là Publish (để bài viết được xuất bản công khai lên web ngay lập tức thay vì lưu nháp).
+
+<img width="1917" height="1020" alt="image" src="https://github.com/user-attachments/assets/bb1a3826-5f1b-4fc2-9559-c9b6c5887761" />
+
+- Bấm nút màu cam Execute step ở góc trên bên phải Node WordPress để chạy thử xem bài viết đã được đẩy lên web chưa.
+
+- Nếu hiện thông báo xanh thành công, bấm X đóng node lại để ra bàn vẽ chính. Nhìn lên góc trên cùng bên phải giao diện n8n, bấm gạt cái công tắc Publish (hoặc nút kích hoạt luồng) sang màu xanh để luồng này chính thức hoạt động tự động ngầm vĩnh viễn!
+
+<img width="1916" height="1021" alt="image" src="https://github.com/user-attachments/assets/a022527e-db49-4e1f-a1c4-d04f4af3fa84" />
+
+<img width="1917" height="1079" alt="image" src="https://github.com/user-attachments/assets/e3bfd1ce-8c73-49cb-b67f-dcf601f5ceb7" />
+
+- Kết quả xem bài viết mới tinh do AI vừa tự động đăng lên link: https://mywordpress.nguyenthu.id.vn/
+
+<img width="1917" height="1017" alt="image" src="https://github.com/user-attachments/assets/a0fe1700-7d3f-40d1-b460-e5c622a95e4c" />
+
+- Flow Automation của n8n (kết quả nhìn bên ngoài):
+
+<img width="1916" height="1079" alt="image" src="https://github.com/user-attachments/assets/b955f3f9-799b-4288-8448-3559c23f87cb" />
+
+### ***📋 Báo cáo kết quả: Xây dựng mạch tự động hóa (Giai đoạn 4)***
+
+***Bước 1: Cấu hình bộ não AI (Node Gemini)***
+
+- Kết nối thành công Google Gemini API bằng tài khoản cá nhân thông qua cơ chế API Key an toàn.
+
+- Tinh chỉnh cấu trúc Prompt Engineering để ép mô hình gemini-2.0-flash xử lý chuỗi văn bản nhận được từ Telegram, sau đó biên tập thành một cấu trúc dữ liệu dạng chuỗi JSON thuần chứa các thẻ định dạng HTML tối ưu hóa khả năng đọc của CMS.
+
+***Bước 2: Xử lý và bóc tách dữ liệu (Node Code in JavaScript)***
+
+- Sử dụng một đoạn mã JavaScript ngắn để nhận chuỗi dữ liệu thô (rawText) từ Node Gemini.
+
+- Dùng hàm JSON.parse() để chuyển đổi chuỗi thô đó thành một Object sạch, bóc tách riêng biệt thành hai biến đầu ra là title (tiêu đề bài viết) và content (nội dung bài viết) giúp các Node sau dễ dàng kế thừa.
+
+***Bước 3: Tự động xuất bản nội dung (Node WordPress)***
+
+- Khởi tạo mã xác thực nội bộ Mật khẩu ứng dụng (Application Password) gồm 24 ký tự trên hệ quản trị WordPress.
+
+- Cấu hình Node WordPress trên n8n liên kết qua giao thức Basic Auth, thực hiện ánh xạ dữ liệu (Mapping) biến title vào trường Tiêu đề và biến content vào trường Nội dung của bài viết.
+
+- Thiết lập thuộc tính Status = Publish để bài viết tự động kích hoạt trạng thái công khai ngay khi nhận được tín hiệu.
+
+---
+
+### GIAI ĐOẠN 5: DEMO KẾT QUẢ CUỐI CÙNG
+
+- Chủ đề gửi Bot Telegram: `Viết bài phân tích ưu điểm vượt trội của Docker Container so với máy ảo Virtual Machine truyền thống.`
+
+<img width="1913" height="1019" alt="Ảnh chụp màn hình 2026-05-23 143608" src="https://github.com/user-attachments/assets/9775c2d6-ef00-4159-b25a-7cb60b0526f5" />
+
+- Kết quả kỳ vọng: AI sẽ tự động chia bố cục bài viết, dùng thẻ <h2> làm các tiêu đề phụ, dùng thẻ <strong> để nhấn mạnh các từ khóa như Tối ưu tài nguyên, Tốc độ khởi động, Tính đóng gói, và sử dụng thẻ để làm bảng so sánh danh sách cực kỳ dễ nhìn.
+
+<img width="1916" height="1022" alt="image" src="https://github.com/user-attachments/assets/9ebac5a3-2d8b-4abb-894b-28849760b8fb" />
+
+---
+
+### 🏆 NHẬN XÉT KẾT QUẢ ĐẠT ĐƯỢC TỪ DỰ ÁN
+
+***1. Về kiến trúc hạ tầng và tính bền vững (Infrastructure & Resilience)***
+
+**- Giải pháp ảo hóa tối ưu:** Việc triển khai toàn bộ hệ thống (MariaDB, WordPress, n8n) cô lập trong các Docker Container giúp hệ thống không bị xung đột môi trường phần mềm trên hệ điều hành Ubuntu gốc. Các dịch vụ được quản lý tập trung thông qua docker-compose, cho phép khởi tạo, bảo trì hoặc tái cấu trúc hệ thống một cách thần tốc.
+
+**- Cơ chế lưu trữ toàn vẹn (Data Persistence):** Việc cấu hình các Docker Volumes độc lập đảm bảo toàn bộ dữ liệu bài viết của WordPress và cấu hình mạch tự động hóa của n8n được lưu trữ vĩnh viễn dưới ổ đĩa cứng của VPS, không bị mất đi khi container khởi động lại hoặc gặp sự cố nguồn điện.
+
+**- Định tuyến an toàn qua Cloudflare:** Hệ thống tận dụng mạng lưới DNS của Cloudflare để phân giải các sub-domain (mywordpress.nguyenthu.id.vn, n8n.nguyenthu.id.vn) một cách mượt mà, giúp che giấu IP gốc của máy chủ và tăng tốc độ tải trang nhờ cơ chế lưu bộ nhớ đệm (Caching).
+
+***2. Về tư duy xử lý và chuẩn hóa dữ liệu (Data Engineering & Logic)***
+
+**- Làm chủ kỹ nghệ Prompt (Prompt Engineering):** Dự án đã cấu hình thành công một hệ thống câu lệnh ràng buộc (Strict Constraints) cho mô hình gemini-2.0-flash. Việc ép AI không được sử dụng ký tự bọc Markdown (```json) và bắt buộc cấu trúc dữ liệu đầu ra phải là một chuỗi JSON thuần túy là một bước xử lý kỹ thuật cực kỳ quan trọng để ngăn chặn lỗi biên dịch (Syntax Error).
+
+**- Xử lý bất đồng bộ mượt mà bằng JavaScript:** Node Code JS đóng vai trò bộ lọc trung gian, áp dụng thành công hàm cấu trúc nâng cao JSON.parse() để chuyển đổi chuỗi văn bản thô từ Gemini thành một đối tượng Object sạch sẽ. Việc bóc tách độc lập hai trường title và content giúp chuẩn hóa dữ liệu đầu vào cho WordPress API, loại bỏ hoàn toàn các lỗi trả về giá trị trống (undefined).
+
+**- Ứng dụng HTML đa phương tiện:** Bài viết sinh ra không đơn thuần là văn bản thô (Plain Text) mà tự động chứa sẵn cấu trúc phân cấp HTML chuẩn SEO. Khi đẩy qua WordPress API, CMS này tự động biên dịch các thẻ này thành giao diện trực quan vô cùng đẹp mắt và chuyên nghiệp ngoài trang chủ.
+
+***3. Về hiệu năng vận hành và bảo mật (Performance & Security)***
+
+**- Tốc độ xử lý thời gian thực (Real-time Processing):** Luồng dữ liệu hoạt động theo cơ chế hướng sự kiện (Event-Driven) thông qua Webhook của Telegram API. Ngay khi người dùng nhấn gửi tin nhắn trên điện thoại, n8n lập tức bắt được tín hiệu và kích hoạt toàn mạch. Tổng thời gian từ lúc nhận lệnh, gọi AI xử lý cấu trúc, bóc tách mã cho đến khi bài viết được "lên sóng" công khai chỉ dao động từ 3 đến 5 giây — đạt hiệu suất tối ưu tuyệt đối.
+
+**- Cơ chế xác thực an toàn:** Thay vì sử dụng mật khẩu chính của tài khoản Admin WordPress (gây nguy cơ lộ lọt tài khoản tối cao), hệ thống đã triển khai cơ chế Mật khẩu ứng dụng (Application Password) 24 ký tự mã hóa riêng biệt. Mã này chỉ cho phép n8n có quyền ghi (đăng bài) mà không thể thay đổi cấu hình sâu của hệ thống, đảm bảo tính bảo mật nghiêm ngặt theo tiêu chuẩn doanh nghiệp.
+
+***🎯 KẾT LUẬN CHUNG***
+
+Dự án đã hoàn thành vượt mức mong đợi và đạt được tất cả các mục tiêu đề ra của môn học Thiết kế ứng dụng với mã nguồn mở. Hệ thống không chỉ dừng lại ở mức lý thuyết mà đã tạo ra một sản phẩm "Chatbot AI Content Creator" có giá trị thực tiễn rất cao, chứng minh năng lực kết hợp nhuần nhuyễn giữa hạ tầng mạng, lập trình logic JavaScript và công nghệ trí tuệ nhân tạo (Generative AI) của sinh viên Nguyễn Văn Thứ.
 
 # <p align="center">***THE END***</p>
