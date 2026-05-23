@@ -626,7 +626,7 @@ return {
 
 - Flow Automation của n8n (kết quả nhìn bên ngoài):
 
-<img width="1916" height="1079" alt="image" src="https://github.com/user-attachments/assets/b955f3f9-799b-4288-8448-3559c23f87cb" />
+<img width="1919" height="1018" alt="image" src="https://github.com/user-attachments/assets/886392de-1fb3-4ec5-87de-5c62980ee3b9" />
 
 ### ***📋 Báo cáo kết quả: Xây dựng mạch tự động hóa (Giai đoạn 4)***
 
