@@ -324,4 +324,81 @@ volumes:
 
 <img width="1915" height="1018" alt="image" src="https://github.com/user-attachments/assets/9dd7a03c-8b08-4f43-ad0c-03eb9efe4978" />
 
+### ***B. Khởi tạo telegram & cấu hình node***
+
+- Tạo Bot Telegram, mở ứng dụng Telegram (trên điện thoại hoặc máy tính) lên làm theo các bước này:
+
+  - Tìm kiếm con bot chính chủ có tích xanh tên là: @BotFather.
+  - Bấm Start rồi gõ hoặc chọn lệnh: /newbot.
+  - Đặt tên cho Bot: Gõ tên hiển thị, ví dụ: Thứ Nguyễn AI Bot.
+  - Đặt Username cho Bot: Viết liền không dấu, phải kết thúc bằng chữ bot, ví dụ: vanthu_ai_content_bot.
+
+<img width="1917" height="1021" alt="Ảnh chụp màn hình 2026-05-23 114549" src="https://github.com/user-attachments/assets/1c11c69d-e6f1-41a6-a1c1-901bb248d118" />
+
+- Sau khi tạo xong, @BotFather sẽ gửi một đoạn mã HTTP API Token (Access Token). Copy chuỗi này lại.
+
+🚨 BƯỚC BẮT BUỘC: Bấm vào đường link của con Bot bạn vừa tạo, bấm Start và gửi cho nó một tin nhắn bất kỳ (ví dụ: Test bot) để kích hoạt luồng kết nối ban đầu.
+
+<img width="1915" height="1019" alt="Ảnh chụp màn hình 2026-05-23 115213" src="https://github.com/user-attachments/assets/0dd27bc2-c544-4922-b551-865954a1f615" />
+
+***Node 1: Cấu hình trên n8n (Node Telegram Trigger):***
+
+- Bấm dấu +, tìm node Telegram, chọn Telegram Trigger (Sự kiện: On Message).
+
+<img width="1917" height="1019" alt="image" src="https://github.com/user-attachments/assets/314efa47-ec36-4707-a2a2-baa418ddfd90" />
+
+- Mục Credential for Telegram API: Chọn Create New Credential, dán đoạn Telegram Bot Token vào.
+
+  - Mở cấu hình node Telegram Trigger trên giao diện bàn vẽ n8n:
+  - Mục Webhook System / Event: Chọn sự kiện On message (Kích hoạt khi có tin nhắn mới).
+  - Mục Credential: Chọn Create New Credential và dán mã Access Token nhận từ BotFather để cấp quyền kết nối an toàn.
+    
+<img width="1915" height="1021" alt="image" src="https://github.com/user-attachments/assets/ab3ceb7d-8419-4ee1-92a7-d3b5fc059950" />
+
+- Bấm Listen for test event để n8n chờ. Lúc này, nhắn tin cho Bot Telegram một câu bất kỳ (vd: "Viết bài giới thiệu Chatbot AI"). 
+
+<img width="1916" height="1021" alt="Ảnh chụp màn hình 2026-05-23 121759" src="https://github.com/user-attachments/assets/73787829-295b-4331-bdb0-cd987b898624" />
+
+- Kiểm tra tín hiệu: Bạn sẽ thấy dữ liệu dạng TABLE, JSON đổ về n8n thành công.
+  
+<img width="1917" height="1019" alt="image" src="https://github.com/user-attachments/assets/9e55b356-fc48-4ba0-80b8-fa20bb361df3" />
+
+<img width="1917" height="1021" alt="image" src="https://github.com/user-attachments/assets/66721165-ed9a-4956-8bab-3c140b118046" />
+
+***Node 2: Google Gemini API Key (Advanced AI)***
+
+- Lấy Google Gemini API Key: mở một tab mới trên trình duyệt và truy cập vào trang https://aistudio.google.com/api-keys (Đăng nhập bằng Gmail cá nhân của Thứ).
+
+<img width="1918" height="1019" alt="image" src="https://github.com/user-attachments/assets/59461e7c-cda1-41a5-970b-78b03704922e" />
+
+<img width="1916" height="1018" alt="image" src="https://github.com/user-attachments/assets/85f1cc45-6fc7-494a-a426-09a462313500" />
+
+- Tại giao diện Web, bấm vào nút: Create API Key.
+
+<img width="1914" height="1016" alt="image" src="https://github.com/user-attachments/assets/2a44bdaf-f04e-482f-8cde-37e4048604da" />
+
+<img width="1918" height="1020" alt="Ảnh chụp màn hình 2026-05-23 123245" src="https://github.com/user-attachments/assets/87794dd6-d0f4-49f3-90a3-3e55dc4a15b0" />
+
+- Kéo dây từ Node Telegram ra, tìm kiếm Google Gemini -> Chọn Message a model.
+
+<img width="1917" height="1020" alt="image" src="https://github.com/user-attachments/assets/e69e265d-2e23-491d-88e6-98320ef01dd0" />
+
+<img width="1915" height="1021" alt="image" src="https://github.com/user-attachments/assets/cab691db-4c39-4565-841f-82405f505e87" />
+
+- Mục Credential for Google Gemini API: Tạo mới và dán Gemini API Key vào.
+
+<img width="1917" height="1016" alt="image" src="https://github.com/user-attachments/assets/d0adc444-ff6c-4f7d-97b0-53e3c9040fa1" />
+
+- Cấu hình Model: Chọn model đời mới ổn định (như gemini-2.0-flash hoặc gemini-pro).
+
+<img width="1918" height="1023" alt="image" src="https://github.com/user-attachments/assets/9bbff628-e568-4172-abaf-f39baf0b663b" />
+
+
+
+<img width="1918" height="1021" alt="image" src="https://github.com/user-attachments/assets/eb3a1c56-710e-4a25-a547-54de1287f06f" />
+
+<img width="1917" height="1022" alt="image" src="https://github.com/user-attachments/assets/e86c4732-9858-4d48-85d7-f63f4b6634da" />
+
+<img width="1915" height="1019" alt="image" src="https://github.com/user-attachments/assets/b8c2388c-2b2b-42aa-8619-0b2423de8995" />
+
 # <p align="center">***THE END***</p>
