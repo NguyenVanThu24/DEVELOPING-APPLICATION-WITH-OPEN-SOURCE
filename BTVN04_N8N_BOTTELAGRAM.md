@@ -662,6 +662,10 @@ return {
 
 <img width="1916" height="1022" alt="image" src="https://github.com/user-attachments/assets/9ebac5a3-2d8b-4abb-894b-28849760b8fb" />
 
+- Thêm tính năng hoàn thành bài viết bot báo lại và cấp link truy cập. Và kiểm tra lỗi hệ thống trả về cho người dùng như ảnh kết quả.
+  
+<img width="1919" height="1020" alt="Ảnh chụp màn hình 2026-05-23 173347" src="https://github.com/user-attachments/assets/36e0df09-3306-405a-8f26-7dc77addd990" />
+
 ---
 
 ### GIAI ĐOẠN 6: NHẬN XÉT KẾT QUẢ ĐẠT ĐƯỢC TỪ DỰ ÁN
