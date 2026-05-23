@@ -21,9 +21,9 @@
   - [GIAI ĐOẠN 3: KÍCH HOẠT N8N & KHỞI TẠO CHÌA KHÓA KẾT NỐI (CREDENTIALS)](#giai-đoạn-3-kích-hoạt-n8n--khởi-tạo-chìa-khóa-kết-nối-credentials)
   - [GIAI ĐOẠN 4: XỬ LÝ DỮ LIỆU & ĐĂNG BÀI TỰ ĐỘNG LÊN WORDPRESS](#giai-đoạn-4-xử-lý-dữ-liệu--đăng-bài-tự-động-lên-wordpress)
   - [GIAI ĐOẠN 5: DEMO KẾT QUẢ CUỐI CÙNG](#giai-đoạn-5-demo-kết-quả-cuối-cùng)
-  - [🏆 NHẬN XÉT KẾT QUẢ ĐẠT ĐƯỢC TỪ DỰ ÁN](#-nhận-xét-kết-quả-đạt-được-từ-dự-án)
-- [📚 TÀI LIỆU THAM KHẢO](#-tài-liệu-tham-khảo)
-- [📧 Liên Hệ & Hỗ Trợ](#-liên-hệ--hỗ-trợ)
+  - [GIAI ĐOẠN 6: NHẬN XÉT KẾT QUẢ ĐẠT ĐƯỢC TỪ DỰ ÁN](#-nhận-xét-kết-quả-đạt-được-từ-dự-án)
+- [III. TÀI LIỆU THAM KHẢO](#-tài-liệu-tham-khảo)
+- [IV. Liên Hệ & Hỗ Trợ](#-liên-hệ--hỗ-trợ)
 
 ---
 ## I. CẤU TRÚC DỰ ÁN
@@ -664,7 +664,7 @@ return {
 
 ---
 
-### 🏆 NHẬN XÉT KẾT QUẢ ĐẠT ĐƯỢC TỪ DỰ ÁN
+### GIAI ĐOẠN 6: NHẬN XÉT KẾT QUẢ ĐẠT ĐƯỢC TỪ DỰ ÁN
 
 ***1. Về kiến trúc hạ tầng và tính bền vững (Infrastructure & Resilience)***
 
@@ -694,7 +694,7 @@ Dự án đã hoàn thành vượt mức mong đợi và đạt được tất c
 
 ---
 
-## 📚 TÀI LIỆU THAM KHẢO
+## III. TÀI LIỆU THAM KHẢO
 
 - [Docker Documentation](https://docs.docker.com/)
 - [Docker Compose](https://docs.docker.com/compose/)
@@ -704,7 +704,7 @@ Dự án đã hoàn thành vượt mức mong đợi và đạt được tất c
 
 ---
 
-## 📧 Liên Hệ & Hỗ Trợ
+## IV. LIÊN HỆ & HỖ TRỢ
 
 Nếu gặp vấn đề:
 1. Kiểm tra phần **Troubleshooting** ở trên
