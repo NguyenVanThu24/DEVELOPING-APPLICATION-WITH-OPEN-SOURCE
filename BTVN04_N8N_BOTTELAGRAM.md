@@ -1,4 +1,4 @@
-# <p align="center">PHÁT TRIỂN ỨNG DỤNG VỚI MÃ NGUỒN MỞ (N8N + BOT TELAGRAM)</p>
+# <p align="center">PHÁT TRIỂN ỨNG DỤNG VỚI MÃ NGUỒN MỞ (N8N + BOT TELAGRAM TỰ ĐỘNG)</p>
 
 **Môn học:** Phát triển ứng dụng với mã nguồn mở - TEE0421  
 
