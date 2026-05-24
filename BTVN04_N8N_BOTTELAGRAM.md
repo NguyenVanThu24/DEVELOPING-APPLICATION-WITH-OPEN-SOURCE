@@ -729,4 +729,4 @@ Dự án đã hoàn thành vượt mức mong đợi và đạt được tất c
 
 # <p align="center">***THE END***</p>
 
-👉 *Bản quyền nội dung Copyright © 2026 thuộc về Nguyen Van Thu. Bảo lưu mọi quyền (All Rights Reserved). Nghiêm cấm sao chép dưới mọi hình thức khi chưa được sự đồng ý.*
+🔒🛡️*Bản quyền nội dung Copyright © 2026 thuộc về Nguyen Van Thu. Bảo lưu mọi quyền (All Rights Reserved).*
