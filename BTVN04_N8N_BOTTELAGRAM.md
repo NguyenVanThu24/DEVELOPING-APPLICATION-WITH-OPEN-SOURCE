@@ -14,9 +14,9 @@
 
 ## MỤC LỤC
 
-I. [CẤU TRÚC DỰ ÁN](#i-cấu-trúc-dự-án)
+**I.** [CẤU TRÚC DỰ ÁN](#i-cấu-trúc-dự-án)
 
-II. [QUY TRÌNH SETUP PROJECT](#ii-quy-trình-setup-project)
+**II.** [QUY TRÌNH SETUP PROJECT](#ii-quy-trình-setup-project)
 
   - [GIAI ĐOẠN 1: THIẾT LẬP KHỞI TẠO HẠ TẦNG (INFRASTRUCTURE SETUP)](#giai-đoạn-1-thiết-lập-khởi-tạo-hạ-tầng-infrastructure-setup)
   - [GIAI ĐOẠN 2: ĐỊNH TUYẾN INTERNET & CẤU HÌNH BAN ĐẦU](#giai-đoạn-2-định-tuyến-internet--cấu-hình-ban-đầu)
@@ -25,9 +25,9 @@ II. [QUY TRÌNH SETUP PROJECT](#ii-quy-trình-setup-project)
   - [GIAI ĐOẠN 5: DEMO KẾT QUẢ CUỐI CÙNG](#giai-đoạn-5-demo-kết-quả-cuối-cùng)
   - [GIAI ĐOẠN 6: NHẬN XÉT KẾT QUẢ ĐẠT ĐƯỢC TỪ DỰ ÁN](#giai-đoạn-6-nhận-xét-kết-quả-đạt-được-từ-dự-án)
 
-III. [TÀI LIỆU THAM KHẢO](#iii-tài-liệu-tham-khảo)
+**III.** [TÀI LIỆU THAM KHẢO](#iii-tài-liệu-tham-khảo)
 
-IV. [LIÊN HỆ & HỖ TRỢ](#iv-liên-hệ--hỗ-trợ)
+**IV.** [LIÊN HỆ & HỖ TRỢ](#iv-liên-hệ--hỗ-trợ)
 
 ---
 ## I. CẤU TRÚC DỰ ÁN
