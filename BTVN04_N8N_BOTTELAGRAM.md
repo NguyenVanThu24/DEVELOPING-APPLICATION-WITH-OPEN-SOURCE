@@ -704,11 +704,11 @@ Dự án đã hoàn thành vượt mức mong đợi và đạt được tất c
 
 ## III. TÀI LIỆU THAM KHẢO
 
-- [Docker Documentation](https://docs.docker.com/)
-- [Docker Compose](https://docs.docker.com/compose/)
-- [WordPress Official](https://wordpress.org/)
-- [Cloudflare Tunnel Guide](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)
-- [MariaDB Documentation](https://mariadb.com/docs/)
+**1.** [Docker Documentation](https://docs.docker.com/)
+**2.** [Docker Compose](https://docs.docker.com/compose/)
+**3.** [WordPress Official](https://wordpress.org/)
+**4.** [Cloudflare Tunnel Guide](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)
+**5.** [MariaDB Documentation](https://mariadb.com/docs/)
 
 ---
 
