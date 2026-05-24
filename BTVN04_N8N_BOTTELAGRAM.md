@@ -1,4 +1,4 @@
-# <p align="center">PHÁT TRIỂN ỨNG DỤNG VỚI MÃ NGUỒN MỞ (N8N + BOT TELAGRAM TỰ ĐỘNG)</p>
+# <p align="center">PHÁT TRIỂN ỨNG DỤNG VỚI MÃ NGUỒN MỞ (N8N + BOT TELEGRAM TỰ ĐỘNG)</p>
 
 **Môn học:** Phát triển ứng dụng với mã nguồn mở - TEE0421  
 
@@ -8,11 +8,11 @@
 
 **Lớp:** K58KTP
 
-**Deadline:** 23h59 ngày **/05/2026
+**Deadline:** 23h59 ngày 25/05/2026
 
 ---
 
-## 📌 Mục lục Hệ thống
+## MỤC LỤC
 
 - [I. CẤU TRÚC DỰ ÁN](#i-cấu-trúc-dự-án)
 - [II. QUY TRÌNH SETUP PROJECT](#ii-quy-trình-setup-project)
@@ -21,7 +21,7 @@
   - [GIAI ĐOẠN 3: KÍCH HOẠT N8N & KHỞI TẠO CHÌA KHÓA KẾT NỐI (CREDENTIALS)](#giai-đoạn-3-kích-hoạt-n8n--khởi-tạo-chìa-khóa-kết-nối-credentials)
   - [GIAI ĐOẠN 4: XỬ LÝ DỮ LIỆU & ĐĂNG BÀI TỰ ĐỘNG LÊN WORDPRESS](#giai-đoạn-4-xử-lý-dữ-liệu--đăng-bài-tự-động-lên-wordpress)
   - [GIAI ĐOẠN 5: DEMO KẾT QUẢ CUỐI CÙNG](#giai-đoạn-5-demo-kết-quả-cuối-cùng)
-  - [GIAI ĐOẠN 6: NHẬN XÉT KẾT QUẢ ĐẠT ĐƯỢC TỪ DỰ ÁN](#-nhận-xét-kết-quả-đạt-được-từ-dự-án)
+  - [GIAI ĐOẠN 6: NHẬN XÉT KẾT QUẢ ĐẠT ĐƯỢC TỪ DỰ ÁN](#giai-đoạn-6-nhận-xét-kết-quả-đạt-được-từ-dự-án)
 - [III. TÀI LIỆU THAM KHẢO](#-tài-liệu-tham-khảo)
 - [IV. Liên Hệ & Hỗ Trợ](#-liên-hệ--hỗ-trợ)
 
@@ -244,7 +244,7 @@ services:
       - "5678:5678"
     environment:
       - TZ=Asia/Ho_Chi_Minh
-      - WEBHOOK_URL=https://n8n.nguyenthu.id.vn/  # Điền chính xác Subdomain n8n của Thứ
+      - WEBHOOK_URL=https://n8n.nguyenthu.id.vn/  # Điền chính xác Subdomain n8n 
     volumes:
       - n8n_v2_data:/home/node/.n8n
 
@@ -273,7 +273,7 @@ volumes:
 
 <img width="933" height="198" alt="image" src="https://github.com/user-attachments/assets/0d00ddc3-4c1f-4117-b60c-40b3cf00faaa" />
 
-- Lệnh: `chmod 644 tunnel_secret.json config.yml.` Cấp quyền Đọc và Ghi (6) cho người sở hữu, quyền Chỉ Đọc (4) cho nhóm và các đối tượng khác. Đây là mức bảo mật tiêu chuẩn, cho phép hệ thống Docker có quyềnvào đọc nội dung file cấu hình và file khóa để thông mạng, nhưng không được phép tự ý chỉnh sửa file.
+- Lệnh: `chmod 644 tunnel_secret.json config.yml.` Cấp quyền Đọc và Ghi (6) cho người sở hữu, quyền Chỉ Đọc (4) cho nhóm và các đối tượng khác. Đây là mức bảo mật tiêu chuẩn, cho phép hệ thống Docker có quyền vào đọc nội dung file cấu hình và file khóa để thông mạng, nhưng không được phép tự ý chỉnh sửa file.
 
 - Lệnh: `sudo chmod -R 777 ~/ai_automation_v2.` Sử dụng quyền Quản trị tối cao (sudo) và tác động đệ quy (-R) để mở toang toàn bộ quyền Đọc - Ghi - Chạy (777) cho thư mục dự án và tất cả file con bên trong. Xử lý triệt để lỗi xung đột bản quyền giữa các User hệ thống và Container Docker, ép dịch vụ Cloudflare Tunnel đọc được file xác thực ngay lập tức để sửa lỗi bị sập (Restarting).
 
@@ -283,7 +283,7 @@ volumes:
 
 <img width="1917" height="1079" alt="image" src="https://github.com/user-attachments/assets/7139035b-564a-47db-be96-03e1eeee3ebb" />
 
-- Hệ thống sẽ bắt đầu kéo (Pull) các Image từ Docker Hub về và khởi chạy. Khi chạy xong, Thứ gõ lệnh này để kiểm tra trạng thái các Container: `docker ps`
+- Hệ thống sẽ bắt đầu kéo (Pull) các Image từ Docker Hub về và khởi chạy. Khi chạy xong, gõ lệnh này để kiểm tra trạng thái các Container: `docker ps`
 
 <img width="1918" height="591" alt="image" src="https://github.com/user-attachments/assets/1516f1bd-4695-4fab-9e73-9def90d80ffe" />
 
@@ -298,7 +298,7 @@ volumes:
 - Cách xử lý khi không truy cập được vào các cổng:
 
   - Đăng nhập vào https://dash.cloudflare.com.
-  - Chọn tên miền của bạn: nguyenthu.id.vn.
+  - Chọn tên miền của bạn: `nguyenthu.id.vn.`
   - Nhìn menu bên trái, chọn DNS -> Records (Bản ghi).
   - Bấm nút Add record để thêm lần lượt 3 bản ghi CNAME sau đây để cấu hình định tuyến cho cả 3 dịch vụ: `Bản ghi 1 (Cho WordPress),` `Bản ghi 2 (Cho PhpMyAdmin),` `Bản ghi 3 (Cho n8n)`
 
@@ -366,7 +366,7 @@ volumes:
 
 - Quay trở lại tab PhpMyAdmin đang mở https://pma.nguyenthu.id.vn/index.php?route=/
 - Bấm nút F5 (Tải lại trang) hoặc bấm lại vào tên database wp_automation_db.
-- Lúc này, Thứ sẽ thấy một điều kỳ diệu: Hệ thống đã tự động đẻ ra chính xác 12 bảng dữ liệu hệ thống (bắt đầu bằng chữ wp_ như wp_posts, wp_users, wp_options...).
+- Lúc này, sẽ thấy một điều kỳ diệu: Hệ thống đã tự động đẻ ra chính xác 12 bảng dữ liệu hệ thống (bắt đầu bằng chữ wp_ như wp_posts, wp_users, wp_options...).
 
 <img width="1918" height="1020" alt="image" src="https://github.com/user-attachments/assets/59207cce-253d-47d6-b296-51571b311e67" />
 
@@ -409,7 +409,7 @@ volumes:
 
 <img width="1918" height="1079" alt="image" src="https://github.com/user-attachments/assets/0cf3f62c-ebff-4a91-bf0b-57097c17c144" />
 
-- Kết quả nhận được Key gửi về Gmail. Key: `78eadb92-0857-4cc1-8e4a-61cd6342c431`
+- Kết quả nhận được Key gửi về Gmail. Key: `78eadb92-0857-4cc1-****-61cd6342c431`
 
 <img width="1917" height="1079" alt="image" src="https://github.com/user-attachments/assets/f5e52471-6d79-4d3f-9248-a7589361f007" />
 
@@ -419,7 +419,7 @@ volumes:
 
 ***➡️ Bấm vào nút Activate màu cam ngay bên cạnh để xác nhận. Thông báo "Your Registered Community Edition has been successfully activated”.***
 
-- Chào mừng đến với giao diện chính của n8n! Màn hình hiện chữ Welcome, Thu! (Chào Thứ).
+- Chào mừng đến với giao diện chính của n8n! Màn hình hiện chữ Welcome, Thu!
 
 <img width="1915" height="1020" alt="image" src="https://github.com/user-attachments/assets/9bfc68bb-95cf-430c-84ea-4c36b5e90b97" />
 
@@ -470,7 +470,7 @@ volumes:
 
 ***Node 2: Google Gemini API Key (Advanced AI)***
 
-- Lấy Google Gemini API Key: mở một tab mới trên trình duyệt và truy cập vào trang https://aistudio.google.com/api-keys (Đăng nhập bằng Gmail cá nhân của Thứ).
+- Lấy Google Gemini API Key: mở một tab mới trên trình duyệt và truy cập vào trang https://aistudio.google.com/api-keys (Đăng nhập bằng Gmail cá nhân).
 
 <img width="1918" height="1019" alt="image" src="https://github.com/user-attachments/assets/59461e7c-cda1-41a5-970b-78b03704922e" />
 
@@ -525,9 +525,9 @@ volumes:
 
 ***Chạy thử nghiệm để lấy kết quả***
 
-- Sau khi điền xong hết, Thứ nhìn lên phía trên tìm cái nút màu cam có chữ Execute step (ở góc trên bên phải khung cấu hình) rồi bấm vào đó.
+- Sau khi điền xong hết, nhìn lên phía trên tìm cái nút màu cam có chữ Execute step (ở góc trên bên phải khung cấu hình) rồi bấm vào đó.
 
-- Hệ thống n8n sẽ gửi lệnh sang Google AI. Thứ đợi khoảng 3-5 giây, nếu ở cột OUTPUT bên phải hiện ra một chuỗi dữ liệu chứa tiêu đề bài viết và nội dung bài viết đầy các thẻ HTML đã hoàn thành Node 2!
+- Hệ thống n8n sẽ gửi lệnh sang Google AI. Đợi khoảng 3-5 giây, nếu ở cột OUTPUT bên phải hiện ra một chuỗi dữ liệu chứa tiêu đề bài viết và nội dung bài viết đầy các thẻ HTML đã hoàn thành Node 2!
   
 <img width="1914" height="1021" alt="image" src="https://github.com/user-attachments/assets/8d2655fa-383d-4dc0-939a-3291b44ba4ff" />
 
@@ -583,7 +583,7 @@ return {
 
 - Cấu hình Credential WordPress trên n8n. Quay lại tab n8n, trong bảng cấu hình Node WordPress đang mở:
 
-  - Tại mục Credential for WordPress API, Thứ bấm chọn Set  Credential.
+  - Tại mục Credential for WordPress API, bấm chọn Set  Credential.
   - Điền thông số xác thực:
 
 | Trường thông tin | Thông tin |
@@ -604,7 +604,7 @@ return {
 
 <img width="1915" height="1019" alt="image" src="https://github.com/user-attachments/assets/27f09aee-ff3b-4dea-896e-f126eb8de5f9" />
 
-- Đổ Content: Thứ bấm vào ô Content ➡️ nhìn sang cột INPUT bên trái tìm đúng chữ content kéo thả vào ô Content (để nó hiện khối mã xám {{ $json.content }}).
+- Đổ Content: Bấm vào ô Content ➡️ nhìn sang cột INPUT bên trái tìm đúng chữ content kéo thả vào ô Content (để nó hiện khối mã xám {{ $json.content }}).
 
 <img width="1916" height="1022" alt="image" src="https://github.com/user-attachments/assets/9172f370-0cd3-47e6-9015-b8d880854073" />
 
@@ -662,7 +662,7 @@ return {
 
 <img width="1916" height="1022" alt="image" src="https://github.com/user-attachments/assets/9ebac5a3-2d8b-4abb-894b-28849760b8fb" />
 
-- Thêm tính năng hoàn thành bài viết bot báo lại và cấp link truy cập. Và kiểm tra lỗi hệ thống trả về cho người dùng như ảnh kết quả.
+- Thêm tính năng hoàn thành bài viết bot gửi thông báo lại và cấp link truy cập bài viết. Và kiểm tra lỗi hệ thống trả về cho người dùng thông báo như ảnh kết quả.
   
 <img width="1919" height="1020" alt="Ảnh chụp màn hình 2026-05-23 173347" src="https://github.com/user-attachments/assets/36e0df09-3306-405a-8f26-7dc77addd990" />
 
