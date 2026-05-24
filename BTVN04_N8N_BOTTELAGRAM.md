@@ -15,15 +15,19 @@
 ## MỤC LỤC
 
 I. [CẤU TRÚC DỰ ÁN](#i-cấu-trúc-dự-án)
+
 II. [QUY TRÌNH SETUP PROJECT](#ii-quy-trình-setup-project)
+
   - [GIAI ĐOẠN 1: THIẾT LẬP KHỞI TẠO HẠ TẦNG (INFRASTRUCTURE SETUP)](#giai-đoạn-1-thiết-lập-khởi-tạo-hạ-tầng-infrastructure-setup)
   - [GIAI ĐOẠN 2: ĐỊNH TUYẾN INTERNET & CẤU HÌNH BAN ĐẦU](#giai-đoạn-2-định-tuyến-internet--cấu-hình-ban-đầu)
   - [GIAI ĐOẠN 3: KÍCH HOẠT N8N & KHỞI TẠO CHÌA KHÓA KẾT NỐI (CREDENTIALS)](#giai-đoạn-3-kích-hoạt-n8n--khởi-tạo-chìa-khóa-kết-nối-credentials)
   - [GIAI ĐOẠN 4: XỬ LÝ DỮ LIỆU & ĐĂNG BÀI TỰ ĐỘNG LÊN WORDPRESS](#giai-đoạn-4-xử-lý-dữ-liệu--đăng-bài-tự-động-lên-wordpress)
   - [GIAI ĐOẠN 5: DEMO KẾT QUẢ CUỐI CÙNG](#giai-đoạn-5-demo-kết-quả-cuối-cùng)
   - [GIAI ĐOẠN 6: NHẬN XÉT KẾT QUẢ ĐẠT ĐƯỢC TỪ DỰ ÁN](#giai-đoạn-6-nhận-xét-kết-quả-đạt-được-từ-dự-án)
+
 III. [TÀI LIỆU THAM KHẢO](#iii-tài-liệu-tham-khảo)
-IV. [Liên Hệ & Hỗ Trợ](#iv-liên-hệ--hỗ-trợ)
+
+IV. [LIÊN HỆ & HỖ TRỢ](#iv-liên-hệ--hỗ-trợ)
 
 ---
 ## I. CẤU TRÚC DỰ ÁN
