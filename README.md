@@ -1,12 +1,12 @@
 # <p align="center">DEVELOPING-APPLICATION-WITH-OPEN-SOURCE</p>
 
-Họ và tên: Nguyễn Văn Thứ
+**Họ và tên:** Nguyễn Văn Thứ
 
-Lớp: K58KTP
+**Lớp:** K58KTP
 
-MSSV: K225480106062
+**MSSV:** K225480106062
 
-Deadline: 23:59/13/4/2026
+**Deadline:** 23:59 - /13/4/2026
 
 ## FILE A.md
 https://github.com/NguyenVanThu24/DEVELOPING-APPLICATION-WITH-OPEN-SOURCE01/blob/main/A.md
