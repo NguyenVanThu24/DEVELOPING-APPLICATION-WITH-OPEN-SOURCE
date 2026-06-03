@@ -20,3 +20,7 @@ https://github.com/NguyenVanThu24/DEVELOPING-APPLICATION-WITH-OPEN-SOURCE01/blob
 https://github.com/NguyenVanThu24/DEVELOPING-APPLICATION-WITH-OPEN-SOURCE01/blob/main/F.md
 ## FILE G.md
 https://github.com/NguyenVanThu24/DEVELOPING-APPLICATION-WITH-OPEN-SOURCE01/blob/main/G.md
+
+# <p align="center">***THE END***</p>
+
+🔒 *Bản quyền nội dung **Copyright © 2026** thuộc về Nguyễn Văn Thứ. Bảo lưu mọi quyền (All Rights Reserved).*
