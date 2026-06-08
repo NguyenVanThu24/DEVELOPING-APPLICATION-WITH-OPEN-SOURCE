@@ -49,3 +49,6 @@ và các thành phần cần thiết để tạo thành ứng dụng:
 
 ---
 
+# <p align="center">***THE END***</p>
+
+🔒 *Bản quyền nội dung **Copyright © 2026** thuộc về Nguyễn Văn Thứ. Bảo lưu mọi quyền (All Rights Reserved).*
