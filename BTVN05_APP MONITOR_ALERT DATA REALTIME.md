@@ -971,6 +971,49 @@ Thiết lập Nhóm Chat Bot Cảnh báo (Hệ thống nhiều thành viên):
 ---
 
 ##### Bước 3: Thiết kế chi tiết luồng dữ liệu (Flow Design) trên Node-Red
+Kéo các node và điền các thông tin:
+
+***Node Inject (Hẹn giờ):***
+
+  - Kéo từ cột bên trái ra bàn vẽ.
+  - Ấn đúp vào, chọn Repeat là interval, đặt là 5 seconds.
+  - Đặt tên (Name) là: "Kích hoạt mỗi 5 giây".
+
+<img width="1916" height="1079" alt="image" src="https://github.com/user-attachments/assets/e85d533d-be3c-44e9-b06b-4954cbb106a9" />
+
+***Node http request (Cào dữ liệu):***
+
+  - Nối dây từ node Inject sang node này.
+  - Ấn đúp vào, mục Method chọn GET.
+  - Mục URL dán link: https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT
+  - Mục Return chọn: a parsed JSON object.
+  - Đặt tên: "Binance API".
+
+<img width="1915" height="1079" alt="image" src="https://github.com/user-attachments/assets/a9a03b00-38d8-4518-8640-d16eac18d63f" />
+
+***Node Function (Tiền xử lý):***
+
+  - Nối dây từ node http request sang.
+  - Dán code này vào để tách lấy con số giá:
+```
+var price = parseFloat(msg.payload.price);
+msg.payload = price; // Gán giá vào payload để các node sau sử dụng
+return msg;
+```
+
+<img width="1915" height="1079" alt="image" src="https://github.com/user-attachments/assets/436be83e-f35d-483a-8ae7-bc56241af8d1" />
+
+Nhiệm vụ: Ghi đè giá mới nhất vào MariaDB và lưu lịch sử vào InfluxDB.
+
+***Ghi vào MariaDB (Ngả rẽ 1):***
+
+  - Kéo một node Function mới nối từ node Tiền xử lý ra. Dán code SQL:
+
+<img width="1916" height="1078" alt="image" src="https://github.com/user-attachments/assets/33b415e1-1ba8-4f3e-a033-b8ff301f71b0" />
+
+
+
+
 
 
 # <p align="center">***THE END***</p>
