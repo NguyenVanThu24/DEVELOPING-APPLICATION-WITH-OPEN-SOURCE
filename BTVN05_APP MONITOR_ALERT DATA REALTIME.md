@@ -24,6 +24,7 @@
   giờ muốn triển khai app này trên máy chủ thật ko có internet
   thì các bước cần làm là?
 ```
+
 ## THỰC HÀNH ÁP DỤNG
 ```
 sử dụng docker compose có nhiều serivce 
@@ -429,6 +430,547 @@ docker compose logs -f
 `docker compose build`	Build images từ Dockerfile
 
 ---
+
+## PHẦN 2: THỰC HÀNH DỰ ÁN: HỆ THỐNG GIÁM SÁT VÀ CẢNH BÁO THỊ TRƯỜNG TIỀN ĐIỆN TỬ REAL-TIME (CRYPTO VOLATILITY MONITOR)
+### 1. Tổng quan hệ thống
+#### 1.1. Giới thiệu 
+
+Dự án xây dựng một hệ thống tự động hóa khép kín theo kiến trúc Microservices dựa trên nền tảng Docker và Docker Compose. Hệ thống thực hiện thu thập dữ liệu biến động giá của thị trường tiền điện tử (Crypto) theo thời gian thực (Real-time) từ API sàn Binance, thực hiện lưu trữ song song vào hai loại cơ sở dữ liệu khác nhau (Quan hệ và Chuỗi thời gian), trực quan hóa dữ liệu lên Dashboard và tự động phân tích để đưa ra cảnh báo tức thời qua Telegram Bot khi thị trường có biến động bất thường (Bơm/Xả coin).
+
+Các thành phần cốt lõi trong hệ thống được chia thành 4 lớp kiến trúc tường minh:
+```
+[ LỚP THU THẬP & XỬ LÝ ] ➡️ Node-RED (Cào API Binance & Phân tích ngưỡng Alert)
+                                 👇
+[  LỚP LƯU TRỮ (DB)  ] ➡️ MariaDB (Lưu giá tức thời) & InfluxDB (Lưu lịch sử)
+                                 👇
+[ LỚP TRUNG GIAN API ] ➡️ Flask API (Python) kết nối dữ liệu
+                                 👇
+[  LỚP HIỂN THỊ (UI) ] ➡️ Nginx Webserver (Front-end HTML/JS) & iframe Grafana
+```
+
+- Node-RED (Core Automation Engine): Đóng vai trò là trung tâm điều phối dữ liệu. Định kỳ mỗi 5 giây sẽ gọi API của Binance lấy giá mới nhất, phân tích kỹ thuật để phát hiện giá trị bất thường (Alert High/Low), sau đó đẩy dữ liệu đồng thời về 2 cơ sở dữ liệu và kích hoạt Bot Telegram gửi cảnh báo vào nhóm chung khi có biến động.
+
+- MariaDB (Relational Database): Chịu trách nhiệm lưu trữ Giá trị tức thời (Real-time Data). Database này cấu hình nhẹ, luôn chỉ lưu trữ duy nhất một dòng dữ liệu mới nhất của phiên giao dịch để tối ưu hóa tốc độ truy xuất cho tầng hiển thị.
+
+- InfluxDB (Time-Series Database): Chịu trách nhiệm lưu trữ Dữ liệu lịch sử (Historical Data). Định dạng chuỗi thời gian của InfluxDB giúp tối ưu hóa dung lượng lưu trữ cho hàng triệu bản ghi theo từng giây, phục vụ riêng cho việc vẽ biểu đồ trồi sụt của thị trường.
+
+- Flask API (Backend Service): Xây dựng bằng Python, đóng vai trò làm cầu nối (API trung gian). Flask sẽ chọc vào MariaDB lấy giá trị tức thời rồi khạc ra dữ liệu dạng JSON phục vụ cho các tác vụ gọi AJAX/Socket từ Front-end.
+
+- Grafana (Data Visualization): Kết nối trực tiếp vào InfluxDB để bốc dữ liệu lịch sử và trực quan hóa thành biểu đồ kỹ thuật (biểu đồ hình sin, biểu đồ nến). Cấu hình cho phép nhúng (Embedding) để hiển thị trực tiếp trên giao diện người dùng.
+
+- Nginx (Webserver & Front-end proxy): Chạy một trang web tĩnh (HTML + CSS + Javascript). Sử dụng AJAX để gọi Flask API cập nhật số liệu tự động nhảy tanh tách trên màn hình, kết hợp thẻ <iframe> nhúng biểu đồ động từ Grafana.
+
+---
+
+#### 1.2. Cấu trúc thư mục dự án
+```
+crypto-monitor/
+├── docker-compose.yml          # File cấu hình tổng lực kích hoạt toàn bộ hệ thống
+├── nginx/                      # Cấu hình dịch vụ Webserver Nginx
+│   ├── default.conf            # File cấu hình phân luồng Proxy và Port nội bộ
+│   └── html/                   # Giao diện chính người dùng (Front-end)
+│       └── index.html          # Trang bảng điện tử hiển thị giá & iframe Grafana
+├── flask_api/                  # Dịch vụ Backend API (Python Flask)
+│   ├── Dockerfile              # File đóng gói môi trường chạy Python chuyên nghiệp
+│   ├── requirements.txt        # Danh sách các thư viện cần cài (Flask, Connector...)
+│   └── app.py                  # Mã nguồn xử lý gọi dữ liệu real-time từ MariaDB
+├── nodered_data/               # Thư mục lưu trữ toàn bộ luồng kéo giá (Flows) của Node-RED
+├── mariadb_data/               # Nơi lưu trữ vĩnh viễn dữ liệu giá tức thời của MariaDB
+└── influxdb_data/              # Nơi lưu trữ vĩnh viễn chuỗi lịch sử giá của InfluxDB
+```
+
+---
+
+#### 1.3. Danh sách service và cổng
+| Tên Service (Trong Compose) | Tên Container | Cổng Nội bộ (Trong Network) | Cổng Public (Ra ngoài Máy chủ) | Mục đích sử dụng |
+|---|---|---|---|---|
+| nginx | crypto_nginx | 80 | 80 | Người dùng truy cập xem giao diện Bảng điện tử |
+| nodered | crypto_nodered | 1880 | 1880 | Admin truy cập lập trình dòng chảy kéo dữ liệu |
+| grafana | crypto_grafana | 3000 | 3000 | Cung cấp dashboard biểu đồ nhúng iframe |
+| flask-api | crypto_flask_api | 5000 | 5000 | Cung cấp dữ liệu dạng JSON cho Javascript |
+| mariadb | crypto_mariadb | 3306 | 3306 | Lưu trữ giá trị tức thời (Có thể mở để Quản trị DB) |
+| influxdb | crypto_influxdb | 8086 | 8086 | Lưu dữ liệu lịch sử dạng chuỗi thời gian |
+
+> **Nguyên tắc giao tiếp Mạng nội bộ (Internal Networking)**
+Tên dịch vụ thay thế địa chỉ IP: Trong môi trường mạng nội bộ crypto_network, các dịch vụ kết nối với nhau thông qua Tên Service (Service Name) được định nghĩa trong file docker-compose.yml thay vì dùng địa chỉ IP tĩnh (IP nội bộ của Docker sẽ tự thay đổi mỗi khi restart).
+>  
+> **Ví dụ 1:** Trong mã nguồn Flask API (app.py), chuỗi kết nối đến cơ sở dữ liệu MariaDB sẽ là host="mariadb" chứ không phải localhost hay 127.0.0.1.
+> 
+> **Ví dụ 2:** Trong luồng cấu hình của Node-RED, khi muốn ghi dữ liệu vào InfluxDB, ô địa chỉ URL cấu hình sẽ điền là http://influxdb:8086.
+> 
+> **Tính bảo mật hệ thống:** Nhờ cơ chế định tuyến phân tách này, trên thực tế khi triển khai production, người ta có thể đóng hoàn toàn các cổng 3306, 8086, 5000 ra bên ngoài internet. Chỉ cần duy nhất cổng 80 của Nginx mở cho người dùng và cổng 1880 của Node-RED mở cho Admin quản trị, toàn bộ các core bên trong vẫn kết nối ngầm với nhau mượt mà vĩnh viễn.
+
+---
+
+### 2. Cấu hình
+```
+# 1. Tạo thư mục gốc dự án và các thư mục con
+mkdir -p crypto-monitor/nginx/html crypto-monitor/flask_api crypto-monitor/nodered_data crypto-monitor/mariadb_data crypto-monitor/influxdb_data
+
+# 2. Di chuyển thẳng vào thư mục gốc dự án
+cd crypto-monitor
+```
+
+#### 2.1. Cấu hình file docker-compose.yml
+```
+cd crypto-monitor
+nano docker-compose.yml
+```
+Nội dung file `docker-compose.yml:`
+```
+version: '3.8'
+
+services:
+  # 1. Node-RED: Cào dữ liệu API sàn Binance & Xử lý logic phát hiện giá bất thường
+  nodered:
+    image: nodered/node-red:latest
+    container_name: crypto_nodered
+    ports:
+      - "1880:1880"
+    volumes:
+      - ./nodered_data:/data
+    networks:
+      - crypto_network
+    depends_on:
+      - mariadb
+      - influxdb
+    restart: always
+
+  # 2. MariaDB: Lưu trữ giá trị tức thời (Real-time) phục vụ Backend Flask API
+  mariadb:
+    image: mariadb:latest
+    container_name: crypto_mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: crypto_db
+      MYSQL_USER: thu_admin
+      MYSQL_PASSWORD: thu_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mariadb_data:/var/lib/mysql
+    networks:
+      - crypto_network
+    restart: always
+
+  # 3. InfluxDB: Lưu trữ dữ liệu lịch sử dạng chuỗi thời gian (Time-series) phục vụ Grafana
+  influxdb:
+    image: influxdb:1.8
+    container_name: crypto_influxdb
+    environment:
+      - INFLUXDB_DB=crypto_history
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=admin_password
+    ports:
+      - "8086:8086"
+    volumes:
+      - ./influxdb_data:/var/lib/influxdb
+    networks:
+      - crypto_network
+    restart: always
+
+  # 4. Grafana: Trực quan hóa dữ liệu lịch sử trồi sụt của giá coin từ InfluxDB
+  grafana:
+    image: grafana/grafana:latest
+    container_name: crypto_grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ALLOW_EMBEDDING=true  # QUAN TRỌNG: Cho phép nhúng iframe vào trang web
+      - GF_AUTH_ANONYMOUS_ENABLED=true      # Cho phép xem biểu đồ ko cần đăng nhập tài khoản
+    volumes:
+      - grafana_storage:/var/lib/grafana
+    networks:
+      - crypto_network
+    depends_on:
+      - influxdb
+    restart: always
+
+  # 5. Flask API: Backend kết nối MariaDB, khạc dữ liệu JSON cho Front-end
+  flask-api:
+    build:
+      context: ./flask_api        # Trỏ vào thư mục chứa Dockerfile để tự build image
+    container_name: crypto_flask_api
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./flask_api:/app          # Gắn volume để sửa code ở ngoài máy vật lý là container cập nhật luôn
+    networks:
+      - crypto_network
+    depends_on:
+      - mariadb
+    restart: always
+
+  # 6. Nginx Webserver: Phân phối giao diện tĩnh (HTML/JS) & Proxy gọi API nội bộ
+  nginx:
+    image: nginx:latest
+    container_name: crypto_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/html:/usr/share/nginx/html        # Ánh xạ thư mục chứa file index.html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf # Ánh xạ file cấu hình Nginx riêng biệt
+    networks:
+      - crypto_network
+    depends_on:
+      - flask-api
+    restart: always
+
+networks:
+  crypto_network:
+    driver: bridge
+
+volumes:
+  nodered_data:
+  mariadb_data:
+  influxdb_data:
+  grafana_storage: # Khai báo named volume ở đây
+```
+
+---
+
+#### 2.2. Xây dựng Flask API
+##### Bước 1: Khai báo các thư viện cần thiết trong `flask_api/requirements.txt`
+```
+cd flask_api
+nano requirements.txt
+```
+Tầng này có nhiệm vụ cực kỳ quan trọng: Nhận yêu cầu gọi dữ liệu từ trang web Nginx, tự động kết nối ngầm vào cơ sở dữ liệu MariaDB, bốc giá Crypto mới nhất ra rồi trả về mã JSON.
+```
+Flask==3.0.2
+mysql-connector-python==8.3.0
+Flask-Cors==4.0.0
+```
+
+---
+
+##### Bước 2: Xây dựng mã nguồn xử lý kết nối và xuất dữ liệu `flask_api/app.py`
+```
+nano app.py
+```
+Đoạn code đã tích hợp sẵn cơ chế Tự động khởi tạo cấu trúc bảng dữ liệu (Auto DDL). Nghĩa là khi container MariaDB vừa dựng lên chưa có gì, Flask API sẽ tự động tạo bảng crypto_realtime và chèn 1 dòng dữ liệu mồi giá Bitcoin ban đầu để hệ thống không bị lỗi crash:
+```
+import os
+import time
+from flask import Flask, jsonify
+from flask_cors import CORS
+import mysql.connector
+from mysql.connector import Error
+
+app = Flask(__name__)
+CORS(app)  # Kích hoạt CORS cho phép Front-end truy cập API chéo nguồn
+
+# CẤU HÌNH THÔNG SỐ KẾT NỐI MARIADB (Lấy chính xác từ file docker-compose.yml)
+DB_CONFIG = {
+    'host': 'mariadb',        # Sử dụng tên Service nội bộ trong mạng Docker Network
+    'database': 'crypto_db',
+    'user': 'thu_admin',
+    'password': 'thu_password',
+    'port': 3306
+}
+
+def wait_for_db():
+    """Hàm kiểm tra và đợi cho đến khi container MariaDB hoàn toàn sẵn sàng khởi động"""
+    while True:
+        try:
+            connection = mysql.connector.connect(**DB_CONFIG)
+            if connection.is_connected():
+                cursor = connection.cursor()
+                # TỰ ĐỘNG KHỞI TẠO BẢNG NẾU CHƯA TỒN TẠI (Đảm bảo quy trình tự động hóa khép kín)
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS crypto_realtime (
+                        symbol VARCHAR(20) PRIMARY KEY,
+                        price DECIMAL(18, 4) NOT NULL,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                    )
+                """)
+                # CHÈN DỮ LIỆU MỒI BAN ĐẦU CHO MÃ BTC
+                cursor.execute("""
+                    INSERT IGNORE INTO crypto_realtime (symbol, price) 
+                    VALUES ('BTCUSDT', 65000.0000)
+                """)
+                connection.commit()
+                cursor.close()
+                connection.close()
+                print("Successfully connected to MariaDB and initialized database structure!")
+                break
+        except Error as e:
+            print(f"MariaDB is not ready yet ({e}). Waiting 3 seconds...")
+            time.sleep(3)
+
+# Khởi động quy trình kiểm tra kết nối an toàn trước khi chạy server API
+wait_for_db()
+
+@app.route('/price', methods=['GET'])
+def get_realtime_price():
+    """Endpoint: /price - Trả về giá trị tức thời của Bitcoin trong MariaDB"""
+    try:
+        connection = mysql.connector.connect(**DB_CONFIG)
+        cursor = connection.cursor(dictionary=True) # Trả về dữ liệu dạng Dictionary để dễ chuyển sang JSON
+        
+        # Truy vấn lấy dòng dữ liệu giá mới nhất của Bitcoin
+        query = "SELECT symbol, price, updated_at FROM crypto_realtime WHERE symbol = 'BTCUSDT'"
+        cursor.execute(query)
+        result = cursor.fetchone()
+        
+        cursor.close()
+        connection.close()
+        
+        if result:
+            # Chuyển đổi định dạng Decimal và Datetime sang chuỗi để khạc ra chuỗi JSON chuẩn
+            return jsonify({
+                "status": "success",
+                "symbol": result['symbol'],
+                "price": str(result['price']),
+                "updated_at": str(result['updated_at'])
+            }), 200
+        else:
+            return jsonify({"status": "error", "message": "No data found"}), 404
+            
+    except Error as e:
+        return jsonify({"status": "error", "message": f"Database error: {str(e)}"}), 500
+
+if __name__ == '__main__':
+    # Chạy Flask API lắng nghe ở cổng nội bộ 5000 bên trong container
+    app.run(host='0.0.0.0', port=5000, debug=False)
+```
+
+---
+
+##### Bước 3: Tạo cấu trúc Đóng gói môi trường `flask_api/Dockerfile`
+```
+nano Dockerfile
+```
+Để phục vụ cho từ khóa build: ở file Docker Compose, Admin tạo file Dockerfile để chỉ thị quy trình tự động dựng ảnh. 
+```
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Sao chép tệp yêu cầu thư viện vào trước để tối ưu hóa bộ nhớ đệm Layer Cache của Docker
+COPY requirements.txt .
+
+# Cài đặt các thư viện Python mà không lưu trữ file rác bộ đệm
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Sao chép toàn bộ mã nguồn backend vào trong Container làm việc
+COPY . .
+
+# Thông báo cổng mạng container sẽ lắng nghe
+EXPOSE 5000
+
+# Lệnh khởi chạy ứng dụng chính khi container bắt đầu chạy
+CMD ["python", "app.py"]
+```
+
+---
+
+#### 2.3. Cấu hình Luật định tuyến Proxy `nginx/default.conf`
+File: `nginx/default.conf`
+```
+cd ../nginx
+nano default.conf
+```
+Cấu hình này giúp cô lập Flask API ở cổng 5000 ngầm bên trong, mọi yêu cầu lấy dữ liệu từ trình duyệt chỉ cần gọi qua cổng 80 của Nginx:
+```
+server {
+    listen 80;
+    server_name localhost;
+
+    # 1. Định tuyến phân phối giao diện Front-end tĩnh (HTML, CSS, JS)
+    location / {
+        root /usr/share/nginx/html;
+        index index.html index.htm;
+    }
+
+    # 2. Cấu hình Reverse Proxy chuyển tiếp yêu cầu gọi API sang Flask container
+    location /api/ {
+        proxy_pass http://flask-api:5000/; # Gọi trực tiếp qua tên Service nội bộ trong mạng Docker Network
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+---
+
+#### 2.4. Xây dựng Giao diện Bảng điện tử hiển thị `nginx/html/index.html`
+Viết file index.html làm frontend cho hệ thống. i chuyển vào thư mục chứa tài nguyên web tĩnh để tạo file giao diện:
+```
+cd html
+nano index.html
+```
+Mã nguồn HTML phối hợp Javascript xử lý cơ chế AJAX tự động cập nhật (Auto-refresh) và nhúng iframe Grafana hiển thị biểu đồ lịch sử.
+```
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng Điện Tử Giám Sát Thị Trường Crypto Real-time</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121214;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 { color: #f0b90b; margin-bottom: 30px; }
+        .ticker-board {
+            background-color: #1e1e22;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: inline-block;
+            margin-bottom: 40px;
+            border: 1px solid #333;
+        }
+        .crypto-name { font-size: 24px; font-weight: bold; color: #aaa; }
+        .crypto-price {
+            font-size: 48px;
+            font-weight: bold;
+            color: #0ecb81;
+            margin: 10px 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .update-time { font-size: 14px; color: #666; }
+        .chart-section { width: 100%; margin-top: 20px; }
+        h2 { color: #aaa; text-align: left; border-bottom: 2px solid #2d2d30; padding-bottom: 10px; }
+        iframe {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #2d2d30;
+            border-radius: 8px;
+            background-color: #1f2022;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📈 HỆ THỐNG GIÁM SÁT THỊ TRƯỜNG CRYPTO REAL-TIME</h1>
+
+    <div class="ticker-board">
+        <div class="crypto-name">Bitcoin (BTC / USDT)</div>
+        <div id="btc-price" class="crypto-price">Đang tải số liệu...</div>
+        <div class="update-time">Tự động đồng bộ số liệu từ MariaDB mỗi 2 giây</div>
+    </div>
+
+    <div class="chart-section">
+        <h2>📊 Biến Động Lịch Sử Giá (Dữ liệu từ InfluxDB)</h2>
+        <iframe src="http://localhost:3000/d-solo/crypto_dashboard/crypto-monitor-dashboard?orgId=1&panelId=1&refresh=5s" frameborder="0"></iframe>
+    </div>
+</div>
+
+<script>
+    // Hàm thực hiện cơ chế AJAX (Fetch API) gọi lên Flask Backend lấy số liệu mới nhất từ MariaDB
+    function fetchRealtimePrice() {
+        fetch('/api/price') // Gọi gián tiếp qua phân luồng Proxy của Nginx (/api/ -> flask-api:5000/)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.price) {
+                    const priceElement = document.getElementById('btc-price');
+                    // Định dạng số hiển thị thành dạng tiền tệ USD ($) cho trực quan
+                    const formattedPrice = parseFloat(data.price).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+                    priceElement.innerText = formattedPrice;
+                }
+            })
+            .catch(error => {
+                console.error('Lỗi kết nối API hệ thống:', error);
+                document.getElementById('btc-price').innerText = "Mất kết nối DB...";
+            });
+    }
+
+    // Thiết lập bộ hẹn giờ tự động quét (Auto hiển thị số mới khi dữ liệu MariaDB thay đổi)
+    setInterval(fetchRealtimePrice, 2000); // Chu kỳ quét: 2 giây/lần
+    fetchRealtimePrice(); // Kích hoạt mồi lần đầu tiên ngay khi tải trang
+</script>
+
+</body>
+</html>
+```
+
+---
+
+#### 2.5. Khởi động hệ thống
+Sau khi đã hoàn tất toàn bộ mã nguồn và file cấu hình của các Microservices (`docker-compose.yml`, `default.conf`, `index.html`, `app.py`, `Dockerfile`), tiến hành kích hoạt toàn bộ hệ thống trên máy vật lý Ubuntu.
+```
+docker compose up -d --build
+```
+
+<img width="1917" height="1079" alt="image" src="https://github.com/user-attachments/assets/0ab9101e-2ea4-4590-afe4-34a6e79bb741" />
+
+Kiểm tra trạng thái các container 
+```
+docker ps
+```
+<img width="1917" height="798" alt="image" src="https://github.com/user-attachments/assets/bcb95ba5-a6ce-41d4-8dd9-c283bb333159" />
+
+---
+
+#### 2.6. Hướng dẫn Cấu hình Node-RED để Tự động hóa Luồng dữ liệu
+Trong giai đoạn này, **Node-RED** đóng vai trò đầu não thực hiện 4 nhiệm vụ liên tục một cách khép kín:
+- Cào dữ liệu giá Bitcoin thực tế từ API công khai của sàn Binance (Định kỳ mỗi 5 giây).
+- Trích xuất và cập nhật trạng thái giá mới nhất vào **MariaDB** (Ghi đè giá trị tức thời).
+- Đẩy dữ liệu đồng bộ vào **InfluxDB** để tích lũy chuỗi thời gian lịch sử phục vụ Grafana vẽ biểu đồ.
+- Phân tích dữ liệu để phát hiện giá trị bất thường và kích hoạt **Telegram Bot** gửi tin nhắn cảnh báo trực tiếp vào Group hệ thống.
+
+##### Bước 1: Chuẩn bị Thư viện (Palette Nodes) trong Node-RED
+Mặc định, Node-RED bản thô chỉ có các node xử lý logic cơ bản. Để kết nối được với các hệ quản trị cơ sở dữ liệu (MariaDB, InfluxDB), Admin cần tiến hành cài đặt thêm các gói mở rộng (Nodes) thông qua trình quản lý thư viện trực quan.
+
+**Quy trình thực hiện cài đặt:**
+```
+Truy cập Node-RED qua địa chỉ `http://<IP_máy_chủ_Ubuntu>:1882`_**http://172.27.2.42:1880**
+```
+
+Tại góc trên cùng bên phải giao diện, bấm vào biểu tượng Menu (3 dấu gạch ngang) ➡️ Chọn mục Manage palette. Trong bảng điều khiển xuất hiện, bấm chuyển sang tab Install. Lần lượt tìm kiếm chính xác tên 3 thư viện lõi dưới đây và bấm nút Install để hệ thống tự động tải và tích hợp vào thanh công cụ:
+
+```
+node-red-node-mysql (Kết nối MariaDB)
+node-red-contrib-influxdb (Kết nối InfluxDB)
+node-red-contrib-telegrambot (Kết nối Telegram)
+```
+
+<img width="1917" height="1079" alt="image" src="https://github.com/user-attachments/assets/9aef6bf3-ff49-400a-a6e1-f7af4df43a8a" />
+
+##### Bước 2: Hướng dẫn Khởi tạo Telegram Bot và Thiết lập Nhóm cảnh báo nhiều người
+
+Để đáp ứng trọn vẹn yêu cầu cấu trúc của đề tài: Kết hợp bot Telegram, tạo nhóm có 3 người (bao gồm tài khoản ID `1875746636`), gửi tin nhắn cảnh báo dị thường kèm giá trị tường minh, tiến hành thực hiện các bước chuẩn bị hạ tầng mạng xã hội theo quy trình sau:
+
+Khởi tạo Bot Telegram qua @BotFather, mở ứng dụng Telegram trên điện thoại hoặc máy tính cá nhân. Tại ô tìm kiếm, gõ chính xác từ khóa `BotFather` (Có dấu tích xanh chính chủ của Telegram) và bấm `Start`. Gõ câu lệnh: **`/newbot`**
+
+- Hệ thống BotFather sẽ phản hồi yêu cầu nhập tên cho Bot (Name). Nhập vào: Crypto Monitor Bot.
+- Tiếp theo, hệ thống yêu cầu nhập tên định danh duy nhất (Username) kết thúc bằng chữ bot. Nhập vào: thu_crypto_monitor_bot.
+- Sau khi tạo thành công, BotFather sẽ khạc ra một chuỗi mã HTTP API Token bảo mật cấp cao. Tiến hành copy chuỗi Token này ra một file nháp để cấu hình vào Node-RED ở bước sau.
+
+<img width="1916" height="1079" alt="Ảnh chụp màn hình 2026-06-09 115607" src="https://github.com/user-attachments/assets/0bfe1bbb-d42e-4521-8874-8dfae26c5018" />
+
+Thiết lập Nhóm Chat Bot Cảnh báo (Hệ thống nhiều thành viên):
+
+- Trên giao diện Telegram, bấm chọn biểu tượng tạo tin nhắn mới ➡️ Chọn New Group.
+- Tiến hành thêm các thành viên bắt buộc vào nhóm bao gồm:
+  - Tài khoản cá nhân của Thứ (Admin).
+  - Tài khoản một người bạn đồng hành.
+  - Thêm tài khoản ID hệ thống: Tìm kiếm và add chính xác tài khoản có ID số 1875746636 vào nhóm theo yêu cầu cứng của barem bài tập.
+- Tiến hành tìm kiếm tên Username con Bot vừa tạo (thu_crypto_monitor_bot) và add con Bot này vào Group.
+- Đặt tên cho nhóm chat: CẢNH BÁO THỊ TRƯỜNG CRYPTO REAL-TIME.
+> **QUAN TRỌNG:** Truy cập vào phần quản lý thành viên nhóm (Group Info) ➡️ Chọn con Bot của bạn ➡️ Bấm Promote to Admin để cấp quyền quản trị viên, cho phép Bot có quyền tự động đẩy tin nhắn vào nhóm mà không bị bộ lọc chặn tin rác.
+
+<img width="1600" height="672" alt="image" src="https://github.com/user-attachments/assets/6538034a-0e7d-4193-8f6e-f63055ba777c" />
+
+---
+
+##### Bước 3: Thiết kế chi tiết luồng dữ liệu (Flow Design) trên Node-Red
 
 
 # <p align="center">***THE END***</p>
