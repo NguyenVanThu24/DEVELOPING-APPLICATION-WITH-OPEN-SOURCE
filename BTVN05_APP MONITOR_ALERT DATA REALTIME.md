@@ -337,6 +337,101 @@ Named volume được lưu tại /var/lib/docker/volumes/ trên máy host. Dữ 
 
 ---
 
+### 4. Triển khai lên máy chủ thật không có internet
+#### Bước 1: Trên Laptop : Build và Pull tất cả các images
+```
+# Pull tất cả images được khai báo trong docker-compose.yml
+docker compose pull
+
+# Build các image tự viết (nếu có dùng keyword "build:" trong compose file)
+docker compose build
+```
+#### Bước 2: Trên Laptop: Export images ra file nén
+
+```
+# Export từng image riêng lẻ
+docker save mariadb:10.11      -o mariadb.tar
+docker save influxdb:2.7       -o influxdb.tar
+docker save grafana/grafana    -o grafana.tar
+docker save nodered/node-red   -o nodered.tar
+docker save nginx:alpine       -o nginx.tar
+docker save my_flask_api:latest -o flask_api.tar
+
+# Export tất cả vào 1 file nén duy nhất (khuyến nghị)
+docker save \
+  mariadb:10.11 \
+  influxdb:2.7 \
+  grafana/grafana \
+  nodered/node-red \
+  nginx:alpine \
+  my_flask_api:latest \
+  | gzip > all_images.tar.gz
+```
+#### Bước 3: Copy lên máy chủ
+
+```
+# Dùng SCP (truyền qua SSH)
+scp all_images.tar.gz user@192.168.1.100:/home/user/
+
+# Copy toàn bộ project (bao gồm docker-compose.yml, config, source code,...)
+scp -r ./my_project user@192.168.1.100:/home/user/
+```
+Nếu không có SSH, có thể copy qua USB, ổ cứng ngoài, hoặc mạng nội bộ LAN.
+
+#### Bước 4: Load images từ file
+
+```
+# Load images từ file nén
+docker load -i all_images.tar.gz
+# Hoặc:
+gunzip -c all_images.tar.gz | docker load
+
+# Kiểm tra images đã được load thành công
+docker images
+```
+
+#### Bước 5:  Trên Máy chủ: Vào thư mục project
+
+```
+cd /home/user/my_project
+ls -la
+# Kiểm tra có đủ file: docker-compose.yml, .env, nginx.conf, frontend/, flask_api/,...
+```
+#### Bước 6: Khởi động hệ thống
+
+```
+# Chạy toàn bộ hệ thống ở chế độ nền (detached mode)
+docker compose up -d
+
+# Kiểm tra trạng thái các container
+docker compose ps
+
+# Xem log nếu có lỗi
+docker compose logs -f
+```
+
+#### Một số lệnh quan trọng
+
+`docker compose up -d`	Khởi động tất cả service ở chế độ nền
+
+`docker compose down`	Dừng và xoá tất cả container (giữ volumes)
+
+`docker compose ps`	Xem trạng thái các container
+
+`docker compose logs -f`	Xem log realtime
+
+`docker save IMAGE -o file.tar`	Export image ra file
+
+`docker load -i file.tar`	Load image từ file
+
+`docker images`	Liệt kê tất cả images hiện có
+
+`docker compose pull`	Pull images từ registry
+
+`docker compose build`	Build images từ Dockerfile
+
+---
+
 
 # <p align="center">***THE END***</p>
 
