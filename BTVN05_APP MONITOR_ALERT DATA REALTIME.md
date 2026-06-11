@@ -525,6 +525,9 @@ services:
   nodered:
     image: nodered/node-red:latest
     container_name: crypto_nodered
+    environment:
+      - NODE_RED_CREDENTIAL_SECRET=thu_secret_key
+      - TELEGRAM_BOT_TOKEN=8377021415:AAE5QWStUJv1w2hHy-cfbWIK59oDckMCeGA
     ports:
       - "1880:1880"
     volumes:
@@ -658,11 +661,11 @@ import mysql.connector
 from mysql.connector import Error
 
 app = Flask(__name__)
-CORS(app)  # Kích hoạt CORS cho phép Front-end truy cập API chéo nguồn
+CORS(app)  # Kích hoạt CORS bảo mật chéo nguồn cho phép Nginx gọi API an toàn
 
-# CẤU HÌNH THÔNG SỐ KẾT NỐI MARIADB (Lấy chính xác từ file docker-compose.yml)
+# CẤU HÌNH THÔNG SỐ KẾT NỐI MARIADB INTERNET DOCKER NETWORK
 DB_CONFIG = {
-    'host': 'mariadb',        # Sử dụng tên Service nội bộ trong mạng Docker Network
+    'host': 'mariadb',        # Phân giải bằng Docker DNS sang container DB nội bộ
     'database': 'crypto_db',
     'user': 'thu_admin',
     'password': 'thu_password',
@@ -670,13 +673,13 @@ DB_CONFIG = {
 }
 
 def wait_for_db():
-    """Hàm kiểm tra và đợi cho đến khi container MariaDB hoàn toàn sẵn sàng khởi động"""
+    """Hàm vòng lặp kiểm tra trạng thái MariaDB và khởi tạo cấu trúc bảng ban đầu"""
     while True:
         try:
             connection = mysql.connector.connect(**DB_CONFIG)
             if connection.is_connected():
                 cursor = connection.cursor()
-                # TỰ ĐỘNG KHỞI TẠO BẢNG NẾU CHƯA TỒN TẠI (Đảm bảo quy trình tự động hóa khép kín)
+                # 1. TỰ ĐỘNG KHỞI TẠO CẤU TRÚC BẢNG (DDL AUTOMATION)
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS crypto_realtime (
                         symbol VARCHAR(20) PRIMARY KEY,
@@ -684,54 +687,67 @@ def wait_for_db():
                         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                     )
                 """)
-                # CHÈN DỮ LIỆU MỒI BAN ĐẦU CHO MÃ BTC
-                cursor.execute("""
+                # 2. CHÈN DỮ LIỆU MỒI ĐA COIN (Tránh lỗi trống dữ liệu khi Front-end Render lần đầu)
+                seed_data = [
+                    ('BTCUSDT', 65000.0000),
+                    ('ETHUSDT', 3500.0000),
+                    ('BNBUSDT', 600.0000),
+                    ('SOLUSDT', 150.0000),
+                    ('ADAUSDT', 0.65),
+                    ('XRPUSDT', 0.55),
+                    ('DOGEUSDT', 0.12),
+                    ('DOTUSDT', 8.50),
+                    ('AVAXUSDT', 38.00),
+                    ('LINKUSDT', 18.00)
+                ]
+                cursor.executemany("""
                     INSERT IGNORE INTO crypto_realtime (symbol, price) 
-                    VALUES ('BTCUSDT', 65000.0000)
-                """)
+                    VALUES (%s, %s)
+                """, seed_data)
+                
                 connection.commit()
                 cursor.close()
                 connection.close()
-                print("Successfully connected to MariaDB and initialized database structure!")
+                print("Successfully connected to MariaDB and initialized Multi-Coin database structure!")
                 break
         except Error as e:
             print(f"MariaDB is not ready yet ({e}). Waiting 3 seconds...")
             time.sleep(3)
 
-# Khởi động quy trình kiểm tra kết nối an toàn trước khi chạy server API
+# Khởi động tiến trình kiểm tra hạ tầng ngầm trước khi mở cổng API Server
 wait_for_db()
 
 @app.route('/price', methods=['GET'])
-def get_realtime_price():
-    """Endpoint: /price - Trả về giá trị tức thời của Bitcoin trong MariaDB"""
+def get_all_realtime_prices():
+    """Endpoint: /price - Trả về danh sách Dictionary toàn bộ giá Crypto đang có trong DB"""
     try:
         connection = mysql.connector.connect(**DB_CONFIG)
-        cursor = connection.cursor(dictionary=True) # Trả về dữ liệu dạng Dictionary để dễ chuyển sang JSON
+        # Sử dụng dictionary=True để driver tự ép dữ liệu cột thành cặp Key-Value
+        cursor = connection.cursor(dictionary=True) 
         
-        # Truy vấn lấy dòng dữ liệu giá mới nhất của Bitcoin
-        query = "SELECT symbol, price, updated_at FROM crypto_realtime WHERE symbol = 'BTCUSDT'"
+        # Truy vấn quét toàn bộ bảng dữ liệu không sử dụng mệnh đề WHERE lọc tĩnh
+        query = "SELECT symbol, price FROM crypto_realtime"
         cursor.execute(query)
-        result = cursor.fetchone()
+        results = cursor.fetchall()
         
         cursor.close()
         connection.close()
         
-        if result:
-            # Chuyển đổi định dạng Decimal và Datetime sang chuỗi để khạc ra chuỗi JSON chuẩn
-            return jsonify({
-                "status": "success",
-                "symbol": result['symbol'],
-                "price": str(result['price']),
-                "updated_at": str(result['updated_at'])
-            }), 200
+        if results:
+            # Chuyển đổi mảng Rows thành cấu trúc JSON dạng Object cấu trúc: {"MÃ_COIN": GIÁ_SỐ_THẬP_PHÂN}
+            response_data = {}
+            for row in results:
+                response_data[row['symbol']] = float(row['price'])
+                
+            return jsonify(response_data), 200
         else:
-            return jsonify({"status": "error", "message": "No data found"}), 404
+            return jsonify({"status": "error", "message": "No data found in table"}), 404
             
     except Error as e:
         return jsonify({"status": "error", "message": f"Database error: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    # Chạy Flask API lắng nghe ở cổng nội bộ 5000 bên trong container
+    # Flask lắng nghe tại cổng nội bộ 5000 phục vụ Reverse Proxy điều tuyến của Nginx
     app.run(host='0.0.0.0', port=5000, debug=False)
 ```
 
@@ -802,103 +818,7 @@ cd html
 nano index.html
 ```
 Mã nguồn HTML phối hợp Javascript xử lý cơ chế AJAX tự động cập nhật (Auto-refresh) và nhúng iframe Grafana hiển thị biểu đồ lịch sử.
-```
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bảng Điện Tử Giám Sát Thị Trường Crypto Real-time</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #121214;
-            color: #ffffff;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .container {
-            max-width: 1200px;
-            width: 100%;
-            text-align: center;
-        }
-        h1 { color: #f0b90b; margin-bottom: 30px; }
-        .ticker-board {
-            background-color: #1e1e22;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            display: inline-block;
-            margin-bottom: 40px;
-            border: 1px solid #333;
-        }
-        .crypto-name { font-size: 24px; font-weight: bold; color: #aaa; }
-        .crypto-price {
-            font-size: 48px;
-            font-weight: bold;
-            color: #0ecb81;
-            margin: 10px 0;
-            font-family: 'Courier New', Courier, monospace;
-        }
-        .update-time { font-size: 14px; color: #666; }
-        .chart-section { width: 100%; margin-top: 20px; }
-        h2 { color: #aaa; text-align: left; border-bottom: 2px solid #2d2d30; padding-bottom: 10px; }
-        iframe {
-            width: 100%;
-            height: 500px;
-            border: 1px solid #2d2d30;
-            border-radius: 8px;
-            background-color: #1f2022;
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h1>📈 HỆ THỐNG GIÁM SÁT THỊ TRƯỜNG CRYPTO REAL-TIME</h1>
-
-    <div class="ticker-board">
-        <div class="crypto-name">Bitcoin (BTC / USDT)</div>
-        <div id="btc-price" class="crypto-price">Đang tải số liệu...</div>
-        <div class="update-time">Tự động đồng bộ số liệu từ MariaDB mỗi 2 giây</div>
-    </div>
-
-    <div class="chart-section">
-        <h2>📊 Biến Động Lịch Sử Giá (Dữ liệu từ InfluxDB)</h2>
-        <iframe src="http://localhost:3000/d-solo/crypto_dashboard/crypto-monitor-dashboard?orgId=1&panelId=1&refresh=5s" frameborder="0"></iframe>
-    </div>
-</div>
-
-<script>
-    // Hàm thực hiện cơ chế AJAX (Fetch API) gọi lên Flask Backend lấy số liệu mới nhất từ MariaDB
-    function fetchRealtimePrice() {
-        fetch('/api/price') // Gọi gián tiếp qua phân luồng Proxy của Nginx (/api/ -> flask-api:5000/)
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.price) {
-                    const priceElement = document.getElementById('btc-price');
-                    // Định dạng số hiển thị thành dạng tiền tệ USD ($) cho trực quan
-                    const formattedPrice = parseFloat(data.price).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-                    priceElement.innerText = formattedPrice;
-                }
-            })
-            .catch(error => {
-                console.error('Lỗi kết nối API hệ thống:', error);
-                document.getElementById('btc-price').innerText = "Mất kết nối DB...";
-            });
-    }
-
-    // Thiết lập bộ hẹn giờ tự động quét (Auto hiển thị số mới khi dữ liệu MariaDB thay đổi)
-    setInterval(fetchRealtimePrice, 2000); // Chu kỳ quét: 2 giây/lần
-    fetchRealtimePrice(); // Kích hoạt mồi lần đầu tiên ngay khi tải trang
-</script>
-
-</body>
-</html>
-```
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/c83cc53d-b34f-4101-82ec-c9c57a1e6612" />
 
 ---
 
@@ -967,8 +887,6 @@ Thiết lập Nhóm Chat Bot Cảnh báo (Hệ thống nhiều thành viên):
 > **QUAN TRỌNG:** Truy cập vào phần quản lý thành viên nhóm (Group Info) ➡️ Chọn con Bot của bạn ➡️ Bấm Promote to Admin để cấp quyền quản trị viên, cho phép Bot có quyền tự động đẩy tin nhắn vào nhóm mà không bị bộ lọc chặn tin rác.
 
 <img width="1600" height="672" alt="image" src="https://github.com/user-attachments/assets/6538034a-0e7d-4193-8f6e-f63055ba777c" />
-
----
 
 ##### Bước 3: Thiết kế chi tiết luồng dữ liệu (Flow Design) trên Node-Red
 Kéo các node và điền các thông tin:
@@ -1098,12 +1016,16 @@ Tại ô biểu đồ vừa vẽ, góc trên cùng bên phải của khung biể
 Copy đoạn link trong thuộc tính src="..." (đổi localhost thành 172.27.2.42) rồi dán vào file index.html của Nginx.
 <img width="1920" height="1020" alt="Ảnh chụp màn hình 2026-06-11 131851" src="https://github.com/user-attachments/assets/5a8c6a41-cf21-488d-98d7-2286e501edc8" />
 
+---
+
 ### 3. Kết quả 
 <img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/b77c3d66-a4d5-4cf3-ac29-2661c66775c2" />
 
 <img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/486c63d0-e98e-4e30-a3e3-a9cd177d3f31" />
 
 <img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/113ac9dc-9f55-483e-9f09-0376fdaed151" />
+
+---
 
 ### 4. Đóng gói và khôi phục hệ thống
 #### Bước 1: Đóng gói mã nguồn và các tệp cấu hình tài nguyên
@@ -1162,6 +1084,8 @@ docker compose ps
 
 <img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/ba880410-bc17-4d0a-afa3-5b6fdde7ec31" />
 
+---
+
 ## PHẦN 3: KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN DỰ ÁN (CONCLUSION & FUTURE OUTLOOK)
 #### 5.1. Kết luận chung (Project Achievements)
 - Sau thời gian nghiên cứu, thiết kế và triển khai thực nghiệm, dự án "Hệ thống giám sát và phân tích dữ liệu tài chính mã hóa theo thời gian thực - QuantumTrade Pro Terminal" đã hoàn thành xuất sắc toàn bộ các mục tiêu đặt ra, đạt chuẩn quy trình vận hành của một hệ thống Fintech thực tế:
@@ -1173,6 +1097,8 @@ docker compose ps
 - Giao diện người dùng hiện đại (Premium Frontend SPA): Tệp mã nguồn index.html được tối ưu hóa theo ngôn ngữ thiết kế Dark Glass Theme (Glassmorphism) chuẩn sàn giao dịch quốc tế. Tích hợp hoàn hảo 10 tính năng chuyên sâu: Lọc tìm kiếm tức thời (Instant Search), Đánh dấu tài sản yêu thích (LocalStorage Favorites), Hệ thống thông báo động (Notification Toast), và Hiệu ứng nhấp nháy đèn Flash giá (Price Tick Flashing) khi nhận dữ liệu mới.
 
 - DevOps & Tính đóng gói cao: Hệ thống được cô lập và đóng gói hoàn chỉnh bằng Docker Containers. Khả năng sao lưu, di trú và khôi phục hạ tầng được thực hiện tự động qua Docker Compose, đảm bảo tính sẵn sàng cao và toàn vẹn dữ liệu 100%.
+
+---
 
 #### 5.2. Hướng phát triển tương lai (Future Outlook)
 - Mặc dù trạm Terminal đã vận hành ổn định ở trạng thái đỉnh cao, hệ thống vẫn có tiềm năng mở rộng mạnh mẽ trong tương lai để thương mại hóa hoặc nâng cấp nghiên cứu:
