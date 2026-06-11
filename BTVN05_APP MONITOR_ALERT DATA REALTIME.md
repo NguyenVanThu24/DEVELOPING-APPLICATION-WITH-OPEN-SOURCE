@@ -1039,6 +1039,7 @@ Loạt bản tin cảnh báo dị thường được Việt hóa kết xuất th
 ##### Bước 1: Đăng nhập vào trạm quản trị Grafana
   - Truy cập đại chỉ http://172.27.2.42:3000/ để vào Grafana
   - Đăng nhập và đổi mật khẩu (nếu cần):
+    
 | Trường | Thông tin |
 |---|---|
 | Username | admin |
@@ -1056,31 +1057,80 @@ Chọn InfluxDB. Cấu hình các thông số chính xác như sau:
 | URL | http://weather_influxdb:8086 |
 | Database | weather_history |
 | User | admin |
-| Password | adminpassword |
-<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/0520cb93-b2e8-4cc8-baa6-3fd0a0c8a893" />
+| Password | admin_password |
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/f4c581a7-4ac5-48ae-a772-7358a998f665" />
 
 <img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/c270f9b3-b098-48d6-8ed0-12d63abc8d31" />
 
 Kéo xuống dưới cùng ấn `Save & test.` Nếu hiện thông báo màu xanh "Data source is working" là thành công!
 > **Kết quả:** Đã thông mạch Grafana ➡️ InfluxDB thành công!
 
-##### Bước 3: Thiết kế biểu đò đường Sin biến động (CREATE DASHBOARD)
+##### Bước 3: Thiết kế biểu đồ đường Sin biến động (CREATE DASHBOARD)
+Khởi tạo Biến động động cho Hệ thống Multi-Asset (Dashboard Variables)
+```
+- Để giao diện Web HTML có thể tương tác chuyển đổi qua lại giữa 10 đồng coin một cách mượt mà (Single Page Application), một biến môi trường động (Variable) đã được thiết lập trong lõi Grafana:
+- Tên biến (Name): coin (Khai báo chữ viết thường để đồng bộ với thuộc tính &var-coin= trên URL nhúng).
+- Kiểu biến (Type): Query
+- Nguồn cấp (Data Source): influxdb
+```
+> **Lệnh:** `SHOW TAG VALUES FROM "btc_history" WITH KEY = "symbol"`
+
 Nhấn vào biểu tượng + ở phía trên bên phải, chọn New Dashboard -> add Panel -> Configure Visualization
 <img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/c0a90a8d-2c86-4c44-bfd0-0133170963ef" />
 
-Cấu hình khung Queries phía dưới bàn vẽ (Phần quan trọng nhất):
+Cấu hình lõi biểu đồ và khung Queries phía dưới bàn vẽ (Phần quan trọng nhất):
+```
+- Mã truy vấn lõi: `SELECT "value" FROM "btc_history" WHERE "symbol" =~ /^$coin$/`
+- FROM: Click vào chữ select measurement ➡️ Chọn tên bảng lưu lịch sử (Trong Node-RED bạn cấu hình ghi vào bảng nào thì chọn bảng đó, ví dụ: crypto_history hoặc btc_history).
+- WHERE: Ấn vào dấu + ➡️ Chọn symbol ➡️ = ➡️ Chọn /^$coin$/ (Để sau này khi bấm vào các coin bên trái giao diện Web, biểu đồ tự đổi theo đồng coin đó).
+- SELECT: Click vào chữ field(value).
+```
+Tại danh sách bên phải mục Suggestions / All visualizations, bạn chọn kiểu Time series (đồ thị đường thẳng theo thời gian, mặc định ở đầu danh sách). Bấm nút Save -> Đặt tên cho Dashboard (ví dụ: crypto_dashboard).
 
-  - FROM: Click vào chữ select measurement ➡️ Chọn tên bảng lưu lịch sử của Thứ (Trong Node-RED bạn cấu hình ghi vào bảng nào thì chọn bảng đó, ví dụ: crypto_history hoặc btc_history).
-  - WHERE: Ấn vào dấu + ➡️ Chọn symbol ➡️ = ➡️ Chọn $coin (Để sau này khi bấm vào các coin bên trái giao diện Web, biểu đồ tự đổi theo đồng coin đó).
-  - SELECT: Click vào chữ field(value) ➡️ Sửa/Chọn thành field(price) (Vì mình lưu giá tiền).
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/5a37591a-1953-426e-847e-11c8873fe940" />
 
 > **Xóa hàm trung bình:** Nhìn thấy chữ mean() và chữ time($__interval) bên cạnh không? Bấm vào dấu X của 2 chữ đó để xóa sạch đi. (Đúng như thầy dặn, xóa đi để giá nhảy phát là đồ thị uốn lượn ngay lập tức, không bị tính trung bình cộng).
 
+##### Bước 4: Tham số Đường dẫn nhúng Iframe tối ưu hóa (Production Embed URL)
+Tại ô biểu đồ vừa vẽ, góc trên cùng bên phải của khung biểu đồ đó -> Xuất hiện dấu 3 chấm -> Chọn Share -> Chọn thẻ Embed.
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/a6dee5fc-9527-485e-88ce-006fd0fc1116" />
 
+Copy đoạn link trong thuộc tính src="..." (đổi localhost thành 172.27.2.42) rồi dán vào file index.html của Nginx.
+<img width="1920" height="1020" alt="Ảnh chụp màn hình 2026-06-11 131851" src="https://github.com/user-attachments/assets/5a8c6a41-cf21-488d-98d7-2286e501edc8" />
 
+### 3. Kết quả 
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/b77c3d66-a4d5-4cf3-ac29-2661c66775c2" />
 
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/486c63d0-e98e-4e30-a3e3-a9cd177d3f31" />
 
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/113ac9dc-9f55-483e-9f09-0376fdaed151" />
 
+### 4. Đóng gói và khôi phục hệ thống
+#### Bước 1: Đóng gói mã nguồn và các tệp cấu hình tài nguyên
+Tiến hành nén toàn bộ thư mục dự án (bao gồm file Docker Compose, mã nguồn Frontend index.html và các tệp môi trường).
+```
+# Đảm bảo bạn đang đứng ở thư mục gốc (nguyenvanthu@LAPTOP-GTKOUR8M:~$)
+cd ~
+# Nén chính xác thư mục dự án crypto-monitor của bạn
+sudo tar -czvf crypto_terminal_source.tar.gz crypto-monitor/
+```
+#### Bước 2: Vào trong dự án để nén kho dữ liệu (Nếu cấu hình volume lưu tại đây)
+Kiểm tra xem thư mục influxdb_data có nằm trong crypto-monitor không. Nếu có, chạy lệnh này để gom sạch data coin lịch sử:
+```
+# Chui vào trong thư mục dự án của bạn
+cd ~/crypto-monitor
+# Nén kho dữ liệu lưu trữ lịch sử chuỗi thời gian ra ngoài màn hình gốc
+sudo tar -czvf ../crypto_database_records.tar.gz ./influxdb_data/
+```
+#### Bước 3: Xóa mọi container để nghiệm thu
+```
+# Hạ mạch hệ thống, xóa bỏ các container đang chạy ngầm
+docker compose down
+```
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/f05a73fe-c317-43b5-a94e-7944b5d3741a" />
+> Lúc này vào trình duyệt cổng http://172.27.2.42/ sẽ sập hoàn toàn, chứng minh hệ thống đã được dọn dẹp sạch
+
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/718b6ea1-2f95-43d8-8a59-d002399ec942" />
 
 
 
