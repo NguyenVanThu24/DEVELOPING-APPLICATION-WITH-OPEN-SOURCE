@@ -1017,7 +1017,7 @@ return msg;
 > ***Node Bắn Telegram:***
 <img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/bfa0bd35-eff5-49fa-8a3e-366e5b8a0087" />
 
-#### Bước 4: Deploy và kiểm tra
+##### Bước 4: Deploy và kiểm tra
 Bấm nút `Deploy` màu đỏ trên góc phải màn hình để lưu và chạy.
 <img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/63ae196d-855c-43de-a4cf-fa9117070f1e" />
 
@@ -1034,6 +1034,54 @@ Loạt bản tin cảnh báo dị thường được Việt hóa kết xuất th
 > - Bản tin gửi về nhóm chat 3 thành viên được **Bản địa hóa (Việt hóa) 100%** theo thuật ngữ Fintech tiêu chuẩn. Cấu trúc tin nhắn hiển thị trực quan thông qua hệ thống biểu tượng Emoji (🚨, 📈, 📉), phân tách rõ ràng giữa các đồng coin bằng đường kẻ ngang tuyến tính (`------------------------`), và làm nổi bật con số giá trực tiếp bằng định dạng khối code Markdown, giúp kỹ sư vận hành nắm bắt biến động thị trường chỉ trong 1 giây.
 
 ---
+
+#### 2.7. Cấu hình Grafana kết nối InfluxDB
+##### Bước 1: Đăng nhập vào trạm quản trị Grafana
+  - Truy cập đại chỉ http://172.27.2.42:3000/ để vào Grafana
+  - Đăng nhập và đổi mật khẩu (nếu cần):
+| Trường | Thông tin |
+|---|---|
+| Username | admin |
+| Password | admin |
+| New Password | admin123 |
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/3c524ac7-bd89-4520-8b11-f3254607cc0c" />
+
+##### Bước 2: Kết nối nguồn dữ liệu đến InfluxDB (ADD DATA SOURCE)
+Tại giao diện chính, nhìn sang thanh menu bên trái, tìm và bấm vào biểu tượng bánh răng Connections ➡️ Chọn Data sources ➡️ Add data source màu xanh.
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/64172c20-260d-4da1-8188-f20e8c6a4002" />
+
+Chọn InfluxDB. Cấu hình các thông số chính xác như sau:
+| Trường | Thông tin |
+|---|---|
+| URL | http://weather_influxdb:8086 |
+| Database | weather_history |
+| User | admin |
+| Password | adminpassword |
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/0520cb93-b2e8-4cc8-baa6-3fd0a0c8a893" />
+
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/c270f9b3-b098-48d6-8ed0-12d63abc8d31" />
+
+Kéo xuống dưới cùng ấn `Save & test.` Nếu hiện thông báo màu xanh "Data source is working" là thành công!
+> **Kết quả:** Đã thông mạch Grafana ➡️ InfluxDB thành công!
+
+##### Bước 3: Thiết kế biểu đò đường Sin biến động (CREATE DASHBOARD)
+Nhấn vào biểu tượng + ở phía trên bên phải, chọn New Dashboard -> add Panel -> Configure Visualization
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/c0a90a8d-2c86-4c44-bfd0-0133170963ef" />
+
+Cấu hình khung Queries phía dưới bàn vẽ (Phần quan trọng nhất):
+
+  - FROM: Click vào chữ select measurement ➡️ Chọn tên bảng lưu lịch sử của Thứ (Trong Node-RED bạn cấu hình ghi vào bảng nào thì chọn bảng đó, ví dụ: crypto_history hoặc btc_history).
+  - WHERE: Ấn vào dấu + ➡️ Chọn symbol ➡️ = ➡️ Chọn $coin (Để sau này khi bấm vào các coin bên trái giao diện Web, biểu đồ tự đổi theo đồng coin đó).
+  - SELECT: Click vào chữ field(value) ➡️ Sửa/Chọn thành field(price) (Vì mình lưu giá tiền).
+
+> **Xóa hàm trung bình:** Nhìn thấy chữ mean() và chữ time($__interval) bên cạnh không? Bấm vào dấu X của 2 chữ đó để xóa sạch đi. (Đúng như thầy dặn, xóa đi để giá nhảy phát là đồ thị uốn lượn ngay lập tức, không bị tính trung bình cộng).
+
+
+
+
+
+
+
 
 
 # <p align="center">***THE END***</p>
