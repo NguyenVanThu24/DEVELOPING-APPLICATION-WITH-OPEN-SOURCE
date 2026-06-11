@@ -973,26 +973,21 @@ Thiết lập Nhóm Chat Bot Cảnh báo (Hệ thống nhiều thành viên):
 ##### Bước 3: Thiết kế chi tiết luồng dữ liệu (Flow Design) trên Node-Red
 Kéo các node và điền các thông tin:
 
-***Node Inject (Hẹn giờ):***
-
+> ***Node Inject (Hẹn giờ):***
   - Kéo từ cột bên trái ra bàn vẽ.
   - Ấn đúp vào, chọn Repeat là interval, đặt là 5 seconds.
   - Đặt tên (Name) là: "Kích hoạt mỗi 5 giây".
-
 <img width="1916" height="1079" alt="image" src="https://github.com/user-attachments/assets/e85d533d-be3c-44e9-b06b-4954cbb106a9" />
 
-***Node http request (Cào dữ liệu):***
-
+> ***Node http request (Cào dữ liệu):***
   - Nối dây từ node Inject sang node này.
   - Ấn đúp vào, mục Method chọn GET.
   - Mục URL dán link: https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT
   - Mục Return chọn: a parsed JSON object.
   - Đặt tên: "Binance API".
-
 <img width="1915" height="1079" alt="image" src="https://github.com/user-attachments/assets/a9a03b00-38d8-4518-8640-d16eac18d63f" />
 
-***Node Function (Tiền xử lý):***
-
+> ***Node Function (Tiền xử lý):***
   - Nối dây từ node http request sang.
   - Dán code này vào để tách lấy con số giá:
 ```
@@ -1000,20 +995,45 @@ var price = parseFloat(msg.payload.price);
 msg.payload = price; // Gán giá vào payload để các node sau sử dụng
 return msg;
 ```
-
 <img width="1915" height="1079" alt="image" src="https://github.com/user-attachments/assets/436be83e-f35d-483a-8ae7-bc56241af8d1" />
 
-Nhiệm vụ: Ghi đè giá mới nhất vào MariaDB và lưu lịch sử vào InfluxDB.
+> **Nhiệm vụ:** Ghi đè giá mới nhất vào MariaDB và lưu lịch sử vào InfluxDB.
 
-***Ghi vào MariaDB (Ngả rẽ 1):***
+> ***Node Tạo lệnh :***
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/c05a491b-e2d6-4474-996f-b7b511dbf2db" />
 
-  - Kéo một node Function mới nối từ node Tiền xử lý ra. Dán code SQL:
+> ***Node Ghi vào MariaDB:***
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/ac30ca72-d7d3-4471-b97b-0085dc628080" />
 
-<img width="1916" height="1078" alt="image" src="https://github.com/user-attachments/assets/33b415e1-1ba8-4f3e-a033-b8ff301f71b0" />
+> ***Node Ghi vào InfluxDB:***
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/d7437b91-8dd1-4d36-8d94-adf81f221cb3" />
 
+> ***Node Multi-Asset Alert Engine:***
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/acc89531-b53a-468d-9ed0-1fbd02d74c4a" />
 
+> ***Node RBE (Report By Exception) :***
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/5858d4de-8234-4bec-a349-1d34d4c12e7c" />
 
+> ***Node Bắn Telegram:***
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/bfa0bd35-eff5-49fa-8a3e-366e5b8a0087" />
 
+#### Bước 4: Deploy và kiểm tra
+Bấm nút `Deploy` màu đỏ trên góc phải màn hình để lưu và chạy.
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/63ae196d-855c-43de-a4cf-fa9117070f1e" />
+
+Giao diện Trạm terminal phân tích QuantumTrade tại địa `http://172.27.2.42/` chỉ máy chủ nội bộ. 
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/8f64b76d-4ef9-4a35-8cd9-54a4058937c4" />
+> - Giao diệnPresentation Layer hoạt động chuẩn xác theo mô hình **Split Workspace (Tone màu sáng)**. Cột bên trái hiển thị danh sách kiểm soát thời gian thực của các đồng coin top đầu thị trường. Dữ liệu giá được Flask API bốc trực tiếp từ hệ quản trị MariaDB và đồng bộ tự động lên trình duyệt sau mỗi 2 giây (Hiển thị mượt mà các mã BTC, ETH, BNB, SOL, ADA, XRP, DOGE, DOT...).
+> 
+> - Phân khu trung tâm hiển thị cửa sổ nhúng Iframe sẵn sàng kết nối tới luồng đồ thị chuỗi thời gian của Grafana. Hệ thống đã xử lý thành công cơ chế định tuyến tương tác động (`Dynamic Routing Cursor`), cho phép người dùng click chọn phân rã chi tiết từng tài sản một cách độc lập.
+
+Loạt bản tin cảnh báo dị thường được Việt hóa kết xuất thành công về Group chat.
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/a6481b3b-28ad-419f-bb09-a6d9d4c0ee86" />
+> - Ngay khi phát hiện các tài sản tài chính vi phạm dải an toàn thiết lập (Ví dụ: Solana sập xuống mức `$64.51`, dưới ngưỡng sàn `$100`; Avalanche sập xuống mức `$6.466`, dưới ngưỡng sàn `$20`...), Engine lập tức kích hoạt luồng HTTP POST.
+> 
+> - Bản tin gửi về nhóm chat 3 thành viên được **Bản địa hóa (Việt hóa) 100%** theo thuật ngữ Fintech tiêu chuẩn. Cấu trúc tin nhắn hiển thị trực quan thông qua hệ thống biểu tượng Emoji (🚨, 📈, 📉), phân tách rõ ràng giữa các đồng coin bằng đường kẻ ngang tuyến tính (`------------------------`), và làm nổi bật con số giá trực tiếp bằng định dạng khối code Markdown, giúp kỹ sư vận hành nắm bắt biến động thị trường chỉ trong 1 giây.
+
+---
 
 
 # <p align="center">***THE END***</p>
