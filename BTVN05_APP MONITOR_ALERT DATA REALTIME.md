@@ -1128,11 +1128,60 @@ sudo tar -czvf ../crypto_database_records.tar.gz ./influxdb_data/
 docker compose down
 ```
 <img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/f05a73fe-c317-43b5-a94e-7944b5d3741a" />
+
 > Lúc này vào trình duyệt cổng http://172.27.2.42/ sẽ sập hoàn toàn, chứng minh hệ thống đã được dọn dẹp sạch
 
 <img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/718b6ea1-2f95-43d8-8a59-d002399ec942" />
 
+#### Bước 4: Khôi phục hệ thống từ tệp nén (System Restoration Process)
+Sau khi hệ thống được dọn dẹp sạch sẽ ở bước nghiệm thu, quy trình tái cấu hình và khôi phục lại nguyên vẹn trạng thái vận hành của trạm Terminal trên máy chủ mới được thực hiện như sau:
 
+***1. Giải nén mã nguồn và phân vùng dữ liệu:***
+```
+# Đảm bảo đứng tại thư mục gốc người dùng (~)
+cd ~
+# Tiến hành giải nén tệp tin phân phối để phục hồi thư mục dự án
+tar -xzvf crypto_terminal_source.tar.gz
+```
+
+***2. Kích hoạt và khởi động lại toàn bộ hạ tầng Container:***
+```
+# Truy cập vào chính xác thư mục dự án vừa được khôi phục
+cd ~/crypto-monitor
+# Ra lệnh cho Docker Compose tự động kéo Image và dựng lại các container ngầm (-d)
+docker compose up -d
+# Kiểm tra trạng thái sống của các Container (Runtime Check)
+docker compose ps
+```
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/11e3dc21-43ca-4c9d-b7fe-a8d9680273cb" />
+
+> Docker sẽ tự động quét tệp docker-compose.yml, thiết lập lại mạng ảo nội bộ, ánh xạ lại phân vùng Volume lưu trữ lịch sử chuỗi thời gian của InfluxDB v1.8, đưa hệ thống về trạng thái đỉnh cao ban đầu mà không cần cấu hình lại bất kỳ dòng code nào.
+
+#### Bước 5: Kết quả khôi phục dự án
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/401ef7f5-5343-4617-b905-be668731bbd0" />
+
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/ba880410-bc17-4d0a-afa3-5b6fdde7ec31" />
+
+## PHẦN 3: KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN DỰ ÁN (CONCLUSION & FUTURE OUTLOOK)
+#### 5.1. Kết luận chung (Project Achievements)
+- Sau thời gian nghiên cứu, thiết kế và triển khai thực nghiệm, dự án "Hệ thống giám sát và phân tích dữ liệu tài chính mã hóa theo thời gian thực - QuantumTrade Pro Terminal" đã hoàn thành xuất sắc toàn bộ các mục tiêu đặt ra, đạt chuẩn quy trình vận hành của một hệ thống Fintech thực tế:
+
+- Hạ tầng lõi vững chắc (Robust Backend & Pipeline): Xây dựng thành công luồng xử lý dữ liệu tự động (Data Pipeline) bất đồng bộ qua Node-RED. Hệ thống bốc tách dữ liệu mượt mà từ API Binance, chia ngả dữ liệu đồng thời vào MariaDB (phục vụ lưu trữ bảng biểu trạng thái) và InfluxDB v1.8 (tối ưu hóa cấu trúc chuỗi thời gian Time-series phục vụ vẽ đồ thị).
+
+- Hệ thống trực quan hóa cao cấp (Advanced Visualization): Cấu hình thành công lõi Grafana, giải quyết triệt để các bài toán kỹ thuật phức tạp thông qua việc thiết lập biến động động ($coin) và biểu thức chính quy Regex (=~ /^$coin$/). Khung biểu đồ đáp ứng khả năng render mượt mà biến động của 10 đồng coin trong 15 phút gần nhất, tự động làm mới sau mỗi 5 giây.
+
+- Giao diện người dùng hiện đại (Premium Frontend SPA): Tệp mã nguồn index.html được tối ưu hóa theo ngôn ngữ thiết kế Dark Glass Theme (Glassmorphism) chuẩn sàn giao dịch quốc tế. Tích hợp hoàn hảo 10 tính năng chuyên sâu: Lọc tìm kiếm tức thời (Instant Search), Đánh dấu tài sản yêu thích (LocalStorage Favorites), Hệ thống thông báo động (Notification Toast), và Hiệu ứng nhấp nháy đèn Flash giá (Price Tick Flashing) khi nhận dữ liệu mới.
+
+- DevOps & Tính đóng gói cao: Hệ thống được cô lập và đóng gói hoàn chỉnh bằng Docker Containers. Khả năng sao lưu, di trú và khôi phục hạ tầng được thực hiện tự động qua Docker Compose, đảm bảo tính sẵn sàng cao và toàn vẹn dữ liệu 100%.
+
+#### 5.2. Hướng phát triển tương lai (Future Outlook)
+- Mặc dù trạm Terminal đã vận hành ổn định ở trạng thái đỉnh cao, hệ thống vẫn có tiềm năng mở rộng mạnh mẽ trong tương lai để thương mại hóa hoặc nâng cấp nghiên cứu:
+
+- Tích hợp Machine Learning: Nhúng các mô hình mạng học sâu như LSTM (Long Short-Term Memory) vào Node-RED Pipeline để dự đoán xu hướng đường sin giá Coin trong 5 - 10 phút tiếp theo ngay trên biểu đồ Grafana.
+
+- Hệ thống Cảnh báo Đa kênh nâng cao: Kích hoạt phân hệ Telegram Bot kết hợp Discord Webhook, tự động bắn tín hiệu cảnh báo (Alert) kèm ảnh chụp biểu đồ tự động khi giá coin chạm vùng hỗ trợ/kháng cự mạnh.
+
+- Mở rộng Cổng giao dịch giả lập (Paper Trading): Phát triển thêm tính năng cho phép người dùng đặt lệnh mua/bán giả lập, tự động trừ số dư và lưu lịch sử giao dịch vào database MariaDB để kiểm thử chiến thuật (Backtesting).
 
 # <p align="center">***THE END***</p>
 
